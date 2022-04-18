@@ -7,7 +7,10 @@ package dns
 import (
 	"bufio"
 	"context"
+	"encoding/binary"
 	"errors"
+	"io"
+	"net"
 	"runtime"
 	"sync/atomic"
 	"time"
@@ -329,6 +332,88 @@ func (m *Manager) Query(ctx context.Context, bs []byte, from netaddr.IPPort) ([]
 		return nil, errFullQueue
 	}
 	return m.resolver.Query(ctx, bs, from)
+}
+
+const (
+	// RFC 7766 6.2 recommends connection reuse & request pipelining
+	// be undertaken, and the connection be closed by the server
+	// using an idle timeout on the order of seconds.
+	idleTimeoutTCP = 15 * time.Second
+	// The RFCs don't specify the max size of a TCP-based DNS query,
+	// but we want to keep this reasonable. Given payloads are typically
+	// much larger and all known client send a single query, I've arbitrarily
+	// chosen 2k.
+	maxReqSizeTCP = 2048
+)
+
+// HandleTCPConn implements magicDNS over TCP, taking a connection and
+// servicing DNS requests sent down it.
+func (m *Manager) HandleTCPConn(c net.Conn, from netaddr.IPPort) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer c.Close()
+	defer cancel()
+
+	queries := make(chan []byte)
+	go func() {
+		defer close(queries)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+
+			default:
+				c.SetReadDeadline(time.Now().Add(idleTimeoutTCP))
+				var lengthPrefix [2]byte
+				if _, err := io.ReadFull(c, lengthPrefix[:]); err != nil {
+					if err == io.EOF {
+						return // connection closed nominally, we gucci
+					}
+					m.logf("tcp read (len): %v", err)
+					return
+				}
+				wantLength := binary.BigEndian.Uint16(lengthPrefix[:])
+				if int(wantLength) > maxReqSizeTCP {
+					m.logf("tcp request too large (%d > %d)", wantLength, maxReqSizeTCP)
+					return
+				}
+
+				buff := make([]byte, int(wantLength))
+				if _, err := io.ReadFull(c, buff); err != nil {
+					m.logf("tcp read (payload): %v", err)
+					return
+				}
+				queries <- buff
+			}
+		}
+	}()
+
+	for {
+		select {
+		case q, ok := <-queries:
+			if !ok {
+				return // connection closed or timeout, teardown time
+			}
+			// TODO(tom): Do these in parallel.
+			resp, err := m.Query(ctx, q, from)
+			if err != nil {
+				m.logf("tcp query: %v", err)
+				return
+			}
+			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
+
+			var lenBuff [2]byte
+			binary.BigEndian.PutUint16(lenBuff[:], uint16(len(resp)))
+			if _, err := c.Write(lenBuff[:]); err != nil {
+				m.logf("tcp write (len): %v", err)
+				return
+			}
+			if _, err := c.Write(resp); err != nil {
+				m.logf("tcp write (response): %v", err)
+				return
+			}
+		}
+	}
 }
 
 func (m *Manager) Down() error {
