@@ -7,6 +7,8 @@
 *.dylib
 *.spk
 
+tailscale
+tailscaled
 cmd/tailscale/tailscale
 cmd/tailscaled/tailscaled
 
