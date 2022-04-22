@@ -136,6 +136,7 @@ type userspaceEngine struct {
 	networkMapCallbacks map[*someHandle]NetworkMapCallback
 	tsIPByIPPort        map[netaddr.IPPort]netaddr.IP          // allows registration of IP:ports as belonging to a certain Tailscale IP for whois lookups
 	pongCallback        map[[8]byte]func(packet.TSMPPongReply) // for TSMP pong responses
+	icmpEchoCallback    map[uint32]func()                      // for ICMP echo responses
 
 	// Lock ordering: magicsock.Conn.mu, wgLock, then mu.
 }
@@ -384,6 +385,20 @@ func NewUserspaceEngine(logf logger.Logf, conf Config) (_ Engine, reterr error) 
 		if cb != nil {
 			go cb(pong)
 		}
+	}
+
+	e.tundev.OnICMPEchoReceived = func(p *packet.Parsed) bool {
+		idSeq := p.EchoIDSeq()
+		e.mu.Lock()
+		defer e.mu.Unlock()
+		cb := e.icmpEchoCallback[idSeq]
+		if cb == nil {
+			// We didn't swallow it, so let it flow to the host.
+			return false
+		}
+		e.logf("wgengine: got diagnostic ICMP response %02x", idSeq)
+		go cb()
+		return true
 	}
 
 	// wgdev takes ownership of tundev, will close it when closed.
@@ -1267,7 +1282,7 @@ func (e *userspaceEngine) UpdateStatus(sb *ipnstate.StatusBuilder) {
 	e.magicConn.UpdateStatus(sb)
 }
 
-func (e *userspaceEngine) Ping(ip netaddr.IP, useTSMP bool, cb func(*ipnstate.PingResult)) {
+func (e *userspaceEngine) Ping(ip netaddr.IP, pingType string, cb func(*ipnstate.PingResult)) {
 	res := &ipnstate.PingResult{IP: ip.String()}
 	pip, ok := e.PeerForIP(ip)
 	if !ok {
@@ -1284,15 +1299,14 @@ func (e *userspaceEngine) Ping(ip netaddr.IP, useTSMP bool, cb func(*ipnstate.Pi
 	}
 	peer := pip.Node
 
-	pingType := "disco"
-	if useTSMP {
-		pingType = "TSMP"
-	}
 	e.logf("ping(%v): sending %v ping to %v %v ...", ip, pingType, peer.Key.ShortString(), peer.ComputedName)
-	if useTSMP {
-		e.sendTSMPPing(ip, peer, res, cb)
-	} else {
+	switch pingType {
+	case "disco":
 		e.magicConn.Ping(peer, res, cb)
+	case "TSMP":
+		e.sendTSMPPing(ip, peer, res, cb)
+	case "ICMP":
+		e.sendICMPEcho(ip, peer, res, cb)
 	}
 }
 
@@ -1311,6 +1325,55 @@ func (e *userspaceEngine) mySelfIPMatchingFamily(dst netaddr.IP) (src netaddr.IP
 		return netaddr.IP{}, errors.New("no self address in netmap")
 	}
 	return netaddr.IP{}, errors.New("no self address in netmap matching address family")
+}
+
+func (e *userspaceEngine) sendICMPEcho(ip netaddr.IP, peer *tailcfg.Node, res *ipnstate.PingResult, cb func(*ipnstate.PingResult)) {
+	srcIP, err := e.mySelfIPMatchingFamily(ip)
+	if err != nil {
+		res.Err = err.Error()
+		cb(res)
+		return
+	}
+	var icmph packet.Header
+	if srcIP.Is4() {
+		icmph = packet.ICMP4Header{
+			IP4Header: packet.IP4Header{
+				IPProto: ipproto.ICMPv4,
+				Src:     srcIP,
+				Dst:     ip,
+			},
+			Type: packet.ICMP4EchoRequest,
+			Code: packet.ICMP4NoCode,
+		}
+	} else {
+		icmph = packet.ICMP6Header{
+			IP6Header: packet.IP6Header{
+				IPProto: ipproto.ICMPv6,
+				Src:     srcIP,
+				Dst:     ip,
+			},
+			Type: packet.ICMP6EchoRequest,
+			Code: packet.ICMP6NoCode,
+		}
+	}
+
+	idSeq, payload := packet.ICMPEchoPayload(nil)
+
+	expireTimer := time.AfterFunc(10*time.Second, func() {
+		e.setICMPEchoCallback(idSeq, nil)
+	})
+	t0 := time.Now()
+	e.setICMPEchoCallback(idSeq, func() {
+		expireTimer.Stop()
+		d := time.Since(t0)
+		res.LatencySeconds = d.Seconds()
+		res.NodeIP = ip.String()
+		res.NodeName = peer.ComputedName
+		cb(res)
+	})
+
+	icmpPing := packet.Generate(icmph, payload)
+	e.tundev.InjectOutbound(icmpPing)
 }
 
 func (e *userspaceEngine) sendTSMPPing(ip netaddr.IP, peer *tailcfg.Node, res *ipnstate.PingResult, cb func(*ipnstate.PingResult)) {
@@ -1370,6 +1433,19 @@ func (e *userspaceEngine) setTSMPPongCallback(data [8]byte, cb func(packet.TSMPP
 		delete(e.pongCallback, data)
 	} else {
 		e.pongCallback[data] = cb
+	}
+}
+
+func (e *userspaceEngine) setICMPEchoCallback(idSeq uint32, cb func()) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.icmpEchoCallback == nil {
+		e.icmpEchoCallback = map[uint32]func(){}
+	}
+	if cb == nil {
+		delete(e.icmpEchoCallback, idSeq)
+	} else {
+		e.icmpEchoCallback[idSeq] = cb
 	}
 }
 

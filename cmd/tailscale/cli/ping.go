@@ -112,7 +112,12 @@ func runPing(ctx context.Context, args []string) error {
 	anyPong := false
 	for {
 		n++
-		bc.Ping(ip, pingArgs.tsmp)
+		// TODO(tailscale/corp#754): cleanup
+		pingType := "disco"
+		if pingArgs.tsmp {
+			pingType = "TSMP"
+		}
+		bc.Ping(ip, pingType)
 		timer := time.NewTimer(pingArgs.timeout)
 		select {
 		case <-timer.C:

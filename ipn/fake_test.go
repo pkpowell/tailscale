@@ -108,7 +108,7 @@ func (b *FakeBackend) FakeExpireAfter(x time.Duration) {
 	}
 }
 
-func (b *FakeBackend) Ping(ip string, useTSMP bool) {
+func (b *FakeBackend) Ping(ip string, pingType string) {
 	if b.notify != nil {
 		b.notify(Notify{PingResult: &ipnstate.PingResult{}})
 	}

@@ -176,7 +176,12 @@ func (bs *BackendServer) GotCommand(ctx context.Context, cmd *Command) error {
 		bs.b.RequestEngineStatus()
 		return nil
 	} else if c := cmd.Ping; c != nil {
-		bs.b.Ping(c.IP, c.UseTSMP)
+		// TODO(tailscale/corp#754): cleanup and provide support for ICMP too from CLI
+		pingType := "disco"
+		if c.UseTSMP {
+			pingType = "TSMP"
+		}
+		bs.b.Ping(c.IP, pingType)
 		return nil
 	}
 
@@ -310,10 +315,11 @@ func (bc *BackendClient) FakeExpireAfter(x time.Duration) {
 	bc.send(Command{FakeExpireAfter: &FakeExpireAfterArgs{Duration: x}})
 }
 
-func (bc *BackendClient) Ping(ip string, useTSMP bool) {
+func (bc *BackendClient) Ping(ip string, pingType string) {
 	bc.send(Command{Ping: &PingArgs{
-		IP:      ip,
-		UseTSMP: useTSMP,
+		IP: ip,
+		// TODO(tailscale/corp#754): cleanup, support more
+		UseTSMP: pingType == "TSMP",
 	}})
 }
 

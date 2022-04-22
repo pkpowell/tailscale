@@ -144,6 +144,11 @@ type Wrapper struct {
 	// OnTSMPPongReceived, if non-nil, is called whenever a TSMP pong arrives.
 	OnTSMPPongReceived func(packet.TSMPPongReply)
 
+	// OnICMPEchoReceived, if non-nil, is called whenever a ICMP echo response
+	// arrives. If the packet is to be handled internally this returns true,
+	// false otherwise.
+	OnICMPEchoReceived func(*packet.Parsed) bool
+
 	// PeerAPIPort, if non-nil, returns the peerapi port that's
 	// running for the given IP address.
 	PeerAPIPort func(netaddr.IP) (port uint16, ok bool)
@@ -557,6 +562,16 @@ func (t *Wrapper) filterIn(buf []byte) filter.Response {
 		} else if data, ok := p.AsTSMPPong(); ok {
 			if f := t.OnTSMPPongReceived; f != nil {
 				f(data)
+			}
+		}
+	}
+
+	if p.IsEchoResponse() {
+		if f := t.OnICMPEchoReceived; f != nil {
+			if f(p) {
+				// Note: this looks dropped in metrics, even though it was
+				// handled internally.
+				return filter.DropSilently
 			}
 		}
 	}

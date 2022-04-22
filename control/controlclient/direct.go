@@ -124,9 +124,9 @@ type Options struct {
 
 // Pinger is a subset of the wgengine.Engine interface, containing just the Ping method.
 type Pinger interface {
-	// Ping is a request to start a discovery or TSMP ping with the peer handling
-	// the given IP and then call cb with its ping latency & method.
-	Ping(ip netaddr.IP, useTSMP bool, cb func(*ipnstate.PingResult))
+	// Ping is a request to start a ping with the peer handling the given IP and
+	// then call cb with its ping latency & method.
+	Ping(ip netaddr.IP, pingType string, cb func(*ipnstate.PingResult))
 }
 
 type Decompressor interface {
@@ -1196,10 +1196,12 @@ func answerPing(logf logger.Logf, c *http.Client, pr *tailcfg.PingRequest, pinge
 	}
 	for _, t := range strings.Split(pr.Types, ",") {
 		switch t {
-		case "TSMP", "disco":
+		case "TSMP", "disco", "ICMP":
 			go doPingerPing(logf, c, pr, pinger, t)
+
+		// TODO(tailscale/corp#754): don't use "host" for "ICMP" ?
 		case "host":
-			go doPingerPing(logf, c, pr, ICMPPinger{}, t)
+			go doPingerPing(logf, c, pr, pinger, "ICMP")
 		// TODO(tailscale/corp#754)
 		// case "peerapi":
 		default:
@@ -1407,7 +1409,7 @@ func doPingerPing(logf logger.Logf, c *http.Client, pr *tailcfg.PingRequest, pin
 		return
 	}
 	start := time.Now()
-	pinger.Ping(pr.IP, pingType == "TSMP", func(res *ipnstate.PingResult) {
+	pinger.Ping(pr.IP, pingType, func(res *ipnstate.PingResult) {
 		// Currently does not check for error since we just return if it fails.
 		postPingResult(start, logf, c, pr, res.ToPingResponse(pingType))
 	})
