@@ -9,6 +9,8 @@
 
 tailscale
 tailscaled
+derper
+
 cmd/tailscale/tailscale
 cmd/tailscaled/tailscaled
 
