@@ -84,15 +84,8 @@ func runSSH(ctx context.Context, args []string) error {
 		// Only trust SSH hosts that we know about.
 		"-o", fmt.Sprintf("UserKnownHostsFile %q", knownHostsFile),
 		"-o", "UpdateHostKeys no",
-<<<<<<< HEAD
 		"-o", "StrictHostKeyChecking no",
-||||||| e97209c6
-		"-o", "StrictHostKeyChecking yes",
-=======
-		"-o", "StrictHostKeyChecking yes",
 	)
->>>>>>> c6c752cf6400f2fc0561ddc44be0a22787f3e410
-
 	// TODO(bradfitz): nc is currently broken on macOS:
 	// https://github.com/tailscale/tailscale/issues/4529
 	// So don't use it for now. MagicDNS is usually working on macOS anyway
