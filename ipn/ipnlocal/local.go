@@ -1617,7 +1617,7 @@ func (b *LocalBackend) loadStateLocked(key ipn.StateKey, prefs *ipn.Prefs) (err 
 	case err != nil:
 		return fmt.Errorf("backend prefs: store.ReadState(%q): %v", key, err)
 	}
-	b.prefs, err = ipn.PrefsFromBytes(bs, false)
+	b.prefs, err = ipn.PrefsFromBytes(bs)
 	if err != nil {
 		b.logf("using backend prefs for %q", key)
 		return fmt.Errorf("PrefsFromBytes: %v", err)
@@ -1697,28 +1697,6 @@ func (b *LocalBackend) StartLoginInteractive() {
 	} else {
 		cc.Login(nil, b.loginFlags|controlclient.LoginInteractive)
 	}
-}
-
-// FakeExpireAfter implements Backend.
-func (b *LocalBackend) FakeExpireAfter(x time.Duration) {
-	b.logf("FakeExpireAfter: %v", x)
-
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	if b.netMap == nil {
-		return
-	}
-
-	// This function is called very rarely,
-	// so we prefer to fully copy the netmap over introducing in-place modification here.
-	mapCopy := *b.netMap
-	e := mapCopy.Expiry
-	if e.IsZero() || time.Until(e) > x {
-		mapCopy.Expiry = time.Now().Add(x)
-	}
-	b.setNetMapLocked(&mapCopy)
-	b.send(ipn.Notify{NetMap: b.netMap})
 }
 
 func (b *LocalBackend) Ping(ipStr string, useTSMP bool) {
@@ -1932,6 +1910,10 @@ func (b *LocalBackend) setPrefsLockedOnEntry(caller string, newp *ipn.Prefs) {
 		b.stateMachine()
 	} else {
 		b.authReconfig()
+	}
+
+	if oldp.RunSSH && !newp.RunSSH && b.sshServer != nil {
+		go b.sshServer.OnPolicyChange()
 	}
 
 	b.send(ipn.Notify{Prefs: newp})
