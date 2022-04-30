@@ -142,11 +142,11 @@ type userspaceEngine struct {
 
 // InternalsGetter is implemented by Engines that can export their internals.
 type InternalsGetter interface {
-	GetInternals() (_ *tstun.Wrapper, _ *magicsock.Conn, ok bool)
+	GetInternals() (_ *tstun.Wrapper, _ *magicsock.Conn, _ *dns.Manager, ok bool)
 }
 
-func (e *userspaceEngine) GetInternals() (_ *tstun.Wrapper, _ *magicsock.Conn, ok bool) {
-	return e.tundev, e.magicConn, true
+func (e *userspaceEngine) GetInternals() (_ *tstun.Wrapper, _ *magicsock.Conn, _ *dns.Manager, ok bool) {
+	return e.tundev, e.magicConn, e.dns, true
 }
 
 // ResolvingEngine is implemented by Engines that have DNS resolvers.
@@ -244,7 +244,7 @@ func IsNetstack(e Engine) bool {
 	if !ok {
 		return false
 	}
-	tw, _, ok := ig.GetInternals()
+	tw, _, _, ok := ig.GetInternals()
 	if !ok {
 		return false
 	}
@@ -362,7 +362,7 @@ func NewUserspaceEngine(logf logger.Logf, conf Config) (_ Engine, reterr error) 
 	if conf.RespondToPing {
 		e.tundev.PostFilterIn = echoRespondToAll
 	}
-	e.tundev.PreFilterOut = e.handleLocalPackets
+	e.tundev.PreFilterFromTunToEngine = e.handleLocalPackets
 
 	if envknob.BoolDefaultTrue("TS_DEBUG_CONNECT_FAILURES") {
 		if e.tundev.PreFilterIn != nil {
@@ -460,9 +460,16 @@ func echoRespondToAll(p *packet.Parsed, t *tstun.Wrapper) filter.Response {
 // tailscaled directly. Other packets are allowed to proceed into the
 // main ACL filter.
 func (e *userspaceEngine) handleLocalPackets(p *packet.Parsed, t *tstun.Wrapper) filter.Response {
-	if verdict := e.handleDNS(p, t); verdict == filter.Drop {
+	// Handle traffic to the service IP.
+	// TODO(tom): Netstack handles this when it is installed. Rip all
+	//            this out once netstack is used on all platforms.
+	switch p.Dst.IP() {
+	case magicDNSIP, magicDNSIPv6:
+		err := e.dns.EnqueuePacket(append([]byte(nil), p.Payload()...), p.IPProto, p.Src, p.Dst)
+		if err != nil {
+			e.logf("dns: enqueue: %v", err)
+		}
 		metricMagicDNSPacketIn.Add(1)
-		// local DNS handled the packet.
 		return filter.Drop
 	}
 
@@ -485,21 +492,10 @@ func (e *userspaceEngine) handleLocalPackets(p *packet.Parsed, t *tstun.Wrapper)
 	return filter.Accept
 }
 
-// handleDNS is an outbound pre-filter resolving Tailscale domains.
-func (e *userspaceEngine) handleDNS(p *packet.Parsed, t *tstun.Wrapper) filter.Response {
-	switch p.Dst.IP() {
-	case magicDNSIP, magicDNSIPv6:
-		err := e.dns.EnqueuePacket(append([]byte(nil), p.Payload()...), p.IPProto, p.Src, p.Dst)
-		if err != nil {
-			e.logf("dns: enqueue: %v", err)
-		}
-		return filter.Drop
-	default:
-		return filter.Accept
-	}
-}
-
 // pollResolver reads packets from the DNS resolver and injects them inbound.
+//
+// TODO(tom): Remove this fallback path (via NextPacket()) once
+//            all platforms use netstack.
 func (e *userspaceEngine) pollResolver() {
 	for {
 		bs, err := e.dns.NextPacket()

@@ -135,9 +135,16 @@ type Wrapper struct {
 	PreFilterIn FilterFunc
 	// PostFilterIn is the inbound filter function that runs after the main filter.
 	PostFilterIn FilterFunc
-	// PreFilterOut is the outbound filter function that runs before the main filter
-	// and therefore sees the packets that may be later dropped by it.
-	PreFilterOut FilterFunc
+	// PreFilterFromTunToNetstack is a filter function that runs before the main filter
+	// for packets from the local system. This filter is populated by netstack to hook
+	// packets that should be handled by netstack. If set, this filter runs before
+	// PreFilterFromTunToEngine.
+	PreFilterFromTunToNetstack FilterFunc
+	// PreFilterFromTunToEngine is a filter function that runs before the main filter
+	// for packets from the local system. This filter is populated by wgengine to hook
+	// packets which it handles internally. If both this and PreFilterFromTunToNetstack
+	// filter functions are non-nil, this filter runs second.
+	PreFilterFromTunToEngine FilterFunc
 	// PostFilterOut is the outbound filter function that runs after the main filter.
 	PostFilterOut FilterFunc
 
@@ -451,9 +458,16 @@ func (t *Wrapper) filterOut(p *packet.Parsed) filter.Response {
 		return filter.DropSilently
 	}
 
-	if t.PreFilterOut != nil {
-		if res := t.PreFilterOut(p, t); res.IsDrop() {
-			// Handled by userspaceEngine.handleLocalPackets (quad-100 DNS primarily).
+	if t.PreFilterFromTunToNetstack != nil {
+		if res := t.PreFilterFromTunToNetstack(p, t); res.IsDrop() {
+			// Handled by netstack.Impl.handleLocalPackets (quad-100 DNS primarily)
+			return res
+		}
+	}
+	if t.PreFilterFromTunToEngine != nil {
+		if res := t.PreFilterFromTunToEngine(p, t); res.IsDrop() {
+			// Handled by userspaceEngine.handleLocalPackets (primarily handles
+			// quad-100 if netstack is not installed).
 			return res
 		}
 	}
@@ -676,6 +690,27 @@ func (t *Wrapper) GetFilter() *filter.Filter {
 
 func (t *Wrapper) SetFilter(filt *filter.Filter) {
 	t.filter.Store(filt)
+}
+
+// InjectInboundDirect makes the Wrapper device behave as if a packet
+// with the given contents was received from the network.
+// It takes ownership of one reference count on the packet. The injected
+// packet will not pass through inbound filters.
+//
+// This path is typically used to deliver synthesized packets to the
+// host networking stack.
+func (t *Wrapper) InjectInboundPacketBuffer(pkt *stack.PacketBuffer) error {
+	buf := make([]byte, PacketStartOffset + pkt.Size())
+
+	n := copy(buf[PacketStartOffset:], pkt.NetworkHeader().View())
+	n += copy(buf[PacketStartOffset+n:], pkt.TransportHeader().View())
+	n += copy(buf[PacketStartOffset+n:], pkt.Data().AsRange().AsView())
+	if n != pkt.Size() {
+		panic("unexpected: revisit assumptions")
+	}
+	pkt.DecRef()
+
+	return t.InjectInboundDirect(buf, PacketStartOffset)
 }
 
 // InjectInboundDirect makes the Wrapper device behave as if a packet
