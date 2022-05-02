@@ -383,7 +383,7 @@ body {
     font-family: verdana; 
 }
 .owner { 
-    text-decoration: underline; 
+    // text-decoration: underline; 
 }
 .tailaddr { 
 	text-align: right; 
@@ -394,7 +394,8 @@ body {
 .aright { 
     text-align: right; 
 }
-table, th, td { border: 1px solid black; 
+table, th, td { 
+	border: 1px solid gray; 
     border-spacing : 0; 
     border-collapse : collapse; 
 }
@@ -424,8 +425,8 @@ table tbody tr:nth-child(even) td {
                     <th>Hostname</th>
                     <th>Owner</th>
                     <th>IPs</th>
-                    <th class="rx aright">Rx</th>
-                    <th class="rx aright">Tx</th>
+                    <th class="rx">Rx</th>
+                    <th class="rx">Tx</th>
                     <th>Activity</th>
                     <th>Connection</th>
                 </tr>
