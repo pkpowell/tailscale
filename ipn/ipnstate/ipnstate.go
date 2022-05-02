@@ -352,11 +352,11 @@ type StatusUpdater interface {
 type statusData struct {
 	Peers []peerData
 	IPs   []string
+	Now   time.Time
 }
 
 type peerData struct {
 	IPs        []string
-	Now        time.Time
 	Peer       string
 	ActAgo     string
 	OverDue    bool
@@ -370,8 +370,6 @@ type peerData struct {
 	RX         int64
 }
 
-// var webHTML string
-// var webCSS string
 var t *template.Template
 
 const tp = `
@@ -382,13 +380,13 @@ const tp = `
 <title>Tailscale State</title>
 <style>
 body { 
-    font-family: helvetica; 
+    font-family: verdana; 
 }
 .owner { 
     text-decoration: underline; 
 }
 .tailaddr { 
-    font-style: italic; 
+	text-align: right; 
 }
 .acenter { 
     text-align: center; 
@@ -455,46 +453,13 @@ table tbody tr:nth-child(even) td {
     </p>
 </body>
 `
-const st = `
-body { 
-    font-family: monospace; 
-}
-.owner { 
-    text-decoration: underline; 
-}
-.tailaddr { 
-    font-style: italic; 
-}
-.acenter { 
-    text-align: center; 
-}
-.aright { 
-    text-align: right; 
-}
-table, th, td { border: 1px solid black; 
-    border-spacing : 0; 
-    border-collapse : collapse; 
-}
-thead { 
-    background-color: #FFA500; 
-}
-th, td { 
-    padding: 5px; 
-}
-td { 
-    vertical-align: top; 
-}
-table tbody tr:nth-child(even) td { 
-    background-color: #f5f5f5; 
-}
-`
 
 func init() {
 	cwd, _ := os.Getwd()
 	fmt.Printf("cwd %s\n\n", cwd)
 	// var err error
 	t = template.Must(template.New("status").Parse(tp))
-	template.Must(t.New("style").Parse(st))
+	// template.Must(t.New("style").Parse(st))
 
 	// t, err := t.Parse(webHTML)
 	// if err != nil {
@@ -521,7 +486,7 @@ func init() {
 func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	var data statusData
 
-	// data.Now = time.Now()
+	data.Now = time.Now()
 
 	var peers []*PeerStatus
 	for _, peer := range st.Peers() {
@@ -550,7 +515,7 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		}
 		// var actAgo string
 		if !ps.LastWrite.IsZero() {
-			ago := data.Peers[i].Now.Sub(ps.LastWrite)
+			ago := data.Now.Sub(ps.LastWrite)
 			data.Peers[i].ActAgo = ago.Round(time.Second).String() + " ago"
 			if ago < 5*time.Minute {
 				data.Peers[i].OverDue = true
