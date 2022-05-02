@@ -8,7 +8,6 @@
 package ipnstate
 
 import (
-	"bytes"
 	"fmt"
 	"html"
 	"html/template"
@@ -351,39 +350,163 @@ type StatusUpdater interface {
 }
 
 type statusData struct {
+	Peers []peerData
+	IPs   []string
+}
+
+type peerData struct {
 	IPs        []string
 	Now        time.Time
-	Peers      []*PeerStatus
+	Peer       string
 	ActAgo     string
+	OverDue    bool
+	OS         string
 	ID         tailcfg.StableNodeID
 	Owner      string
 	DNSName    string
 	TailAddr   []string
 	Connection string
+	TX         int64
+	RX         int64
 }
 
-var webHTML string
-
+// var webHTML string
 // var webCSS string
 var t *template.Template
+
+const tp = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tailscale State</title>
+<style>
+body { 
+    font-family: helvetica; 
+}
+.owner { 
+    text-decoration: underline; 
+}
+.tailaddr { 
+    font-style: italic; 
+}
+.acenter { 
+    text-align: center; 
+}
+.aright { 
+    text-align: right; 
+}
+table, th, td { border: 1px solid black; 
+    border-spacing : 0; 
+    border-collapse : collapse; 
+}
+thead { 
+    background-color: #FFA500; 
+}
+th, td { 
+    padding: 5px; 
+}
+td { 
+    vertical-align: top; 
+}
+table tbody tr:nth-child(even) td { 
+    background-color: #f5f5f5; 
+}
+</style>
+</head>
+<body>
+<h1>Tailscale State</h1>
+    <p>Tailscale IPs: <span>{{range .IPs}}<div>{{.}}</div>{{end}}</span>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+
+                    <th>Node</th>
+                    <th>Hostname</th>
+                    <th>Owner</th>
+                    <th>IPs</th>
+                    <th class="rx aright">Rx</th>
+                    <th class="rx aright">Tx</th>
+                    <th>Activity</th>
+                    <th>Connection</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Peers}}
+                <tr>
+                    <td class="id">{{.ID}}</td>
+                    <td class="peer acenter">{{.Peer}}</td>
+                    <td class="os">{{.OS}}</td>
+                    <td class="owner ">{{.Owner}}</td>
+                    <td>
+					{{range .IPs}}
+					<div class="tailaddr">{{.}}</div>
+					{{end}}
+					</td>
+                    <td class="rx aright">{{.RX}}</td>
+                    <td class="tx aright">{{.TX}}</td>
+                    <td class="activity aright">{{.ActAgo}}</td>
+                    <td class="connection ">{{.Connection}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </p>
+</body>
+`
+const st = `
+body { 
+    font-family: monospace; 
+}
+.owner { 
+    text-decoration: underline; 
+}
+.tailaddr { 
+    font-style: italic; 
+}
+.acenter { 
+    text-align: center; 
+}
+.aright { 
+    text-align: right; 
+}
+table, th, td { border: 1px solid black; 
+    border-spacing : 0; 
+    border-collapse : collapse; 
+}
+thead { 
+    background-color: #FFA500; 
+}
+th, td { 
+    padding: 5px; 
+}
+td { 
+    vertical-align: top; 
+}
+table tbody tr:nth-child(even) td { 
+    background-color: #f5f5f5; 
+}
+`
 
 func init() {
 	cwd, _ := os.Getwd()
 	fmt.Printf("cwd %s\n\n", cwd)
 	// var err error
-	t = template.Must(template.New("ipn/ipnstate/status.html").Parse(webHTML))
-	// t := template.New("status")
-	// t.ParseFiles("status.html")
+	t = template.Must(template.New("status").Parse(tp))
+	template.Must(t.New("style").Parse(st))
+
+	// t, err := t.Parse(webHTML)
 	// if err != nil {
 	// 	panic(err)
 	// }
 
 	if t == nil {
-		panic("error occured")
+		panic("an error occured")
 	}
 
-	fmt.Printf("template %#v\n\n", t)
-	// fmt.Printf("webHTML %v", webHTML)
+	fmt.Printf("template name %s\n\n", t.Name())
+	// fmt.Printf("webHTML %s", webHTML)
 	// if err != nil {
 	// 	fmt.Printf("error %v", err)
 	// 	return
@@ -398,7 +521,7 @@ func init() {
 func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	var data statusData
 
-	data.Now = time.Now()
+	// data.Now = time.Now()
 
 	var peers []*PeerStatus
 	for _, peer := range st.Peers() {
@@ -409,58 +532,71 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		peers = append(peers, ps)
 	}
 	SortPeers(peers)
-	data.Peers = peers
+	// data.Peers = peers
+	data.Peers = make([]peerData, len(peers))
 
-	for _, ps := range peers {
-		data.ID = ps.ID
-		data.IPs = make([]string, 0, len(ps.TailscaleIPs))
+	data.IPs = make([]string, 0, len(st.TailscaleIPs))
+	for _, ip := range st.TailscaleIPs {
+		data.IPs = append(data.IPs, ip.String())
+	}
+
+	for i, ps := range peers {
+		data.Peers[i].ID = ps.ID
+		data.Peers[i].Peer = ps.PublicKey.ShortString()
+		data.Peers[i].OS = ps.OS
+		data.Peers[i].IPs = make([]string, 0, len(ps.TailscaleIPs))
 		for _, ip := range ps.TailscaleIPs {
-			data.IPs = append(data.IPs, ip.String())
+			data.Peers[i].IPs = append(data.Peers[i].IPs, ip.String())
 		}
 		// var actAgo string
 		if !ps.LastWrite.IsZero() {
-			ago := data.Now.Sub(ps.LastWrite)
-			data.ActAgo = ago.Round(time.Second).String() + " ago"
+			ago := data.Peers[i].Now.Sub(ps.LastWrite)
+			data.Peers[i].ActAgo = ago.Round(time.Second).String() + " ago"
 			if ago < 5*time.Minute {
-				data.ActAgo = "<b>" + data.ActAgo + "</b>"
+				data.Peers[i].OverDue = true
+				// data.Peers[i].ActAgo = "<b>" + data.Peers[i].ActAgo + "</b>"
 			}
 		}
 
 		// var owner string
 		if up, ok := st.User[ps.UserID]; ok {
-			data.Owner = up.LoginName
-			if i := strings.Index(data.Owner, "@"); i != -1 {
-				data.Owner = data.Owner[:i]
+			data.Peers[i].Owner = up.LoginName
+			if i := strings.Index(data.Peers[i].Owner, "@"); i != -1 {
+				data.Peers[i].Owner = data.Peers[i].Owner[:i]
 			}
 		}
 
-		data.DNSName = dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
+		data.Peers[i].DNSName = dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
+
+		data.Peers[i].RX = ps.RxBytes
+		data.Peers[i].TX = ps.TxBytes
 
 		// // var tailAddr string
 		// var IPs []string
 		// for _, ip := range ps.TailscaleIPs {
 		// 	IPs = append(IPs, ip.String())
 		// }
-		data.TailAddr = data.IPs
+		data.Peers[i].TailAddr = data.Peers[i].IPs
 
 		if ps.Active {
 			if ps.Relay != "" && ps.CurAddr == "" {
-				data.Connection = html.EscapeString(ps.Relay)
+				data.Peers[i].Connection = html.EscapeString(ps.Relay)
 			} else if ps.CurAddr != "" {
-				data.Connection = html.EscapeString(ps.CurAddr)
+				data.Peers[i].Connection = html.EscapeString(ps.CurAddr)
 			}
 		}
 	}
 
-	buf := new(bytes.Buffer)
-	if err := t.ExecuteTemplate(buf, "ipn/ipnstate/status.html", data); err != nil {
-		log.Printf("error: %v", err)
+	// buf := new(bytes.Buffer)
+	if err := t.Execute(w, data); err != nil {
+		// if err := t.ExecuteTemplate(w, "status", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		fmt.Printf("an error happened %v", err)
+		// panic(err)
 	}
-	fmt.Printf("data %v", data)
-	fmt.Printf("buf %v", buf)
-	w.Write(buf.Bytes())
+	// fmt.Printf("data %v", data)
+	// fmt.Printf("buf %v", buf)
+	// w.Write(buf.Bytes())
 }
 
 // func (st *Status) WriteHTML(w io.Writer) {

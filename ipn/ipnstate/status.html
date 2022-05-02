@@ -1,3 +1,4 @@
+{{template "status"}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,9 +7,8 @@
 
 </head>
 <body>
-
 <h1>Tailscale State</h1>
-    <p>Tailscale IP: %s
+    <p>Tailscale IP: 
         <table>
             <thead>
                 <tr>
@@ -26,18 +26,20 @@
                 </tr>
             </thead>
             <tbody>
+                {{range .}}
                 <tr>
                     <td>{{.ID}}</td>
-                    <td class=acenter>%s</td>
-                    <td>%s</td>
+                    <td class=acenter>.Peer</td>
+                    <td>.OS</td>
                     <td class=\"acenter owner\">{{.Owner}}</td>
                     <td><div class=\"tailaddr\">{{.IPs}}</div></td>
-                    <td class=\"aright\">%s</td>
-                    <td class=\"aright\">%s</td>
-                    <td class=\"aright\">%d</td>
-                    <td class=\"aright\">%d</td>
-                    <td>%s</td>
+                    <td class=\"aright\"></td>
+                    <td class=\"aright\"></td>
+                    <td class=\"aright\"></td>
+                    <td class=\"aright\"></td>
+                    <td></td>
                 </tr>
+                {{end}}
             </tbody>
         </table>
     </p>
