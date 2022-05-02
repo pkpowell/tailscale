@@ -361,6 +361,7 @@ type peerData struct {
 	ActAgo     string
 	OverDue    bool
 	OS         string
+	HostName   string
 	ID         tailcfg.StableNodeID
 	Owner      string
 	DNSName    string
@@ -381,6 +382,7 @@ const tp = `
 <style>
 body { 
     font-family: verdana; 
+	font-size: 12px;
 }
 .owner { 
     // text-decoration: underline; 
@@ -420,9 +422,10 @@ table tbody tr:nth-child(even) td {
             <thead>
                 <tr>
                     <th>ID</th>
-
                     <th>Node</th>
                     <th>Hostname</th>
+                    <th>DNS name</th>
+                    <th>OS</th>
                     <th>Owner</th>
                     <th>IPs</th>
                     <th class="rx">Rx</th>
@@ -436,8 +439,10 @@ table tbody tr:nth-child(even) td {
                 <tr>
                     <td class="id">{{.ID}}</td>
                     <td class="peer acenter">{{.Peer}}</td>
-                    <td class="os">{{.OS}}</td>
-                    <td class="owner ">{{.Owner}}</td>
+                    <td class="hostname acenter">{{.HostName}}</td>
+                    <td class="dnsname acenter">{{.DNSName}}</td>
+                    <td class="os acenter">{{.OS}}</td>
+                    <td class="owner acenter">{{.Owner}}</td>
                     <td>
 					{{range .IPs}}
 					<div class="tailaddr">{{.}}</div>
@@ -509,7 +514,10 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	for i, ps := range peers {
 		data.Peers[i].ID = ps.ID
 		data.Peers[i].Peer = ps.PublicKey.ShortString()
+		data.Peers[i].HostName = ps.HostName
 		data.Peers[i].OS = ps.OS
+		data.Peers[i].HostName = dnsname.SanitizeHostname(ps.HostName)
+		// 		dnsName := dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
 		data.Peers[i].IPs = make([]string, 0, len(ps.TailscaleIPs))
 		for _, ip := range ps.TailscaleIPs {
 			data.Peers[i].IPs = append(data.Peers[i].IPs, ip.String())
