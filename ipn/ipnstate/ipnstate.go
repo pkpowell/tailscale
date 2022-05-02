@@ -365,17 +365,34 @@ type statusData struct {
 var webHTML string
 
 // var webCSS string
-var tmpl *template.Template
+var t *template.Template
 
 func init() {
+	cwd, _ := os.Getwd()
+	fmt.Printf("cwd %s\n\n", cwd)
 	// var err error
-	tmpl = template.Must(template.New("./status.html").Parse(webHTML))
+	t = template.Must(template.New("ipn/ipnstate/status.html").Parse(webHTML))
+	// t := template.New("status")
+	// t.ParseFiles("status.html")
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	if t == nil {
+		panic("error occured")
+	}
+
+	fmt.Printf("template %#v\n\n", t)
+	// fmt.Printf("webHTML %v", webHTML)
 	// if err != nil {
 	// 	fmt.Printf("error %v", err)
 	// 	return
 	// }
 	// template.Must(tmpl.New("./status.css").Parse(webCSS))
-	tmpl.Execute(os.Stdout, nil)
+	// err := t.Execute(os.Stdout, nil)
+	// if err != nil {
+	// 	panic(err)
+	// }
 }
 
 func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
@@ -436,7 +453,7 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	}
 
 	buf := new(bytes.Buffer)
-	if err := tmpl.Execute(buf, data); err != nil {
+	if err := t.ExecuteTemplate(buf, "ipn/ipnstate/status.html", data); err != nil {
 		log.Printf("error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
