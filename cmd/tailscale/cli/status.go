@@ -120,7 +120,7 @@ func runStatus(ctx context.Context, args []string) error {
 				return
 			}
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			st.WriteHTML(w)
+			st.WriteHTMLtmpl(w)
 		}))
 		if ctx.Err() != nil {
 			return ctx.Err()

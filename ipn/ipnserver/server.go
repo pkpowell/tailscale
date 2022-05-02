@@ -1061,7 +1061,8 @@ func (s *Server) ServeHTMLStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	st := s.b.Status()
 	// TODO(bradfitz): add LogID and opts to st?
-	st.WriteHTML(w)
+	st.WriteHTMLtmpl(w)
+	// st.WriteHTML(w)
 }
 
 func peerPid(entries []netstat.Entry, la, ra netaddr.IPPort) int {

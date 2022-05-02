@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tailscale State</title>
+
+</head>
+<body>
+<h1>Tailscale State</h1>
+    <p>Tailscale IP: %s
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Peer</th>
+                    <th>OS</th>
+                    <th>Node</th>
+                    <th>Hostname</th>
+                    <th>Owner</th>
+                    <th>IPs</th>
+                    <th>Rx</th>
+                    <th>Tx</th>
+                    <th>Activity</th>
+                    <th>Connection</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range data}}
+                <tr>
+                    <td>{{.ID}}</td>
+                    <td class=acenter>%s</td>
+                    <td>%s</td>
+                    <td class=\"acenter owner\">{{.Owner}}</td>
+                    <td><div class=\"tailaddr\">{{.IPs}}</div></td>
+                    <td class=\"aright\">%s</td>
+                    <td class=\"aright\">%s</td>
+                    <td class=\"aright\">%d</td>
+                    <td class=\"aright\">%d</td>
+                    <td>%s</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </p>
+</body>

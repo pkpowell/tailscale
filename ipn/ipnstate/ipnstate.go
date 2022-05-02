@@ -8,10 +8,13 @@
 package ipnstate
 
 import (
+	"bytes"
 	"fmt"
 	"html"
-	"io"
+	"html/template"
 	"log"
+	"net/http"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -347,45 +350,38 @@ type StatusUpdater interface {
 	UpdateStatus(*StatusBuilder)
 }
 
-func (st *Status) WriteHTML(w io.Writer) {
-	f := func(format string, args ...any) { fmt.Fprintf(w, format, args...) }
+type statusData struct {
+	IPs        []string
+	Now        time.Time
+	Peers      []*PeerStatus
+	ActAgo     string
+	ID         tailcfg.StableNodeID
+	Owner      string
+	DNSName    string
+	TailAddr   []string
+	Connection string
+}
 
-	f(`<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tailscale State</title>
-<style>
-body { font-family: monospace; }
-.owner { text-decoration: underline; }
-.tailaddr { font-style: italic; }
-.acenter { text-align: center; }
-.aright { text-align: right; }
-table, th, td { border: 1px solid black; border-spacing : 0; border-collapse : collapse; }
-thead { background-color: #FFA500; }
-th, td { padding: 5px; }
-td { vertical-align: top; }
-table tbody tr:nth-child(even) td { background-color: #f5f5f5; }
-</style>
-</head>
-<body>
-<h1>Tailscale State</h1>
-`)
+var webHTML string
 
-	//f("<p><b>logid:</b> %s</p>\n", logid)
-	//f("<p><b>opts:</b> <code>%s</code></p>\n", html.EscapeString(fmt.Sprintf("%+v", opts)))
+// var webCSS string
+var tmpl *template.Template
 
-	ips := make([]string, 0, len(st.TailscaleIPs))
-	for _, ip := range st.TailscaleIPs {
-		ips = append(ips, ip.String())
-	}
-	f("<p>Tailscale IP: %s", strings.Join(ips, ", "))
+func init() {
+	// var err error
+	tmpl = template.Must(template.New("./status.html").Parse(webHTML))
+	// if err != nil {
+	// 	fmt.Printf("error %v", err)
+	// 	return
+	// }
+	// template.Must(tmpl.New("./status.css").Parse(webCSS))
+	tmpl.Execute(os.Stdout, nil)
+}
 
-	f("<table>\n<thead>\n")
-	f("<tr><th>ID</th><th>Peer</th><th>OS</th><th>Node</th><th>Hostname</th><th>Owner</th><th>IPs</th><th>Rx</th><th>Tx</th><th>Activity</th><th>Connection</th></tr>\n")
-	f("</thead>\n<tbody>\n")
+func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
+	var data statusData
 
-	now := time.Now()
+	data.Now = time.Now()
 
 	var peers []*PeerStatus
 	for _, peer := range st.Peers() {
@@ -396,85 +392,188 @@ table tbody tr:nth-child(even) td { background-color: #f5f5f5; }
 		peers = append(peers, ps)
 	}
 	SortPeers(peers)
+	data.Peers = peers
 
 	for _, ps := range peers {
-		// fmt.Printf("peer %#v", ps)
-		var actAgo string
-		if !ps.LastWrite.IsZero() {
-			ago := now.Sub(ps.LastWrite)
-			actAgo = ago.Round(time.Second).String() + " ago"
-			if ago < 5*time.Minute {
-				actAgo = "<b>" + actAgo + "</b>"
-			}
-		}
-		var owner string
-		if up, ok := st.User[ps.UserID]; ok {
-			owner = up.LoginName
-			if i := strings.Index(owner, "@"); i != -1 {
-				owner = owner[:i]
-			}
-		}
-
-		// hostName := dnsname.SanitizeHostname(ps.HostName)
-		dnsName := dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
-		// if strings.EqualFold(dnsName, hostName) || ps.UserID != st.Self.UserID {
-		// 	hostName = ""
-		// }
-		// var hostNameHTML string
-		// if hostName != "" {
-		// 	hostNameHTML = "<br>" + html.EscapeString(hostName)
-		// }
-		// fmt.Printf("ps hostname %s", ps.HostName)
-		// fmt.Printf("hostname %s", hostName)
-
-		var tailAddr string
-		var IPs []string
-		// if len(ps.TailscaleIPs) > 0 {
-		// 	tailAddr = ps.TailscaleIPs[0].String()
-		// }
+		data.ID = ps.ID
+		data.IPs = make([]string, 0, len(ps.TailscaleIPs))
 		for _, ip := range ps.TailscaleIPs {
-			IPs = append(IPs, ip.String())
+			data.IPs = append(data.IPs, ip.String())
 		}
-		tailAddr = strings.Join(IPs, ", ")
-		f(`<tr>
-			<td>%s</td>
-			<td class=acenter>%s</td>
-			<td>%s</td>
-			<td class=\"acenter owner\">%s</td>
-			<td><div class=\"tailaddr\">%s</div></td>
-			<td class=\"aright\">%s</td>
-			<td class=\"aright\">%s</td>
-			<td class=\"aright\">%d</td>
-			<td class=\"aright\">%d</td>
-			<td>%s</td>`,
-			ps.ID,
-			ps.PublicKey.ShortString(),
-			ps.OS,
-			html.EscapeString(dnsName),
-			html.EscapeString(ps.HostName),
-			html.EscapeString(owner),
-			tailAddr,
-			ps.RxBytes,
-			ps.TxBytes,
-			actAgo,
-		)
-		f("<td>")
+		// var actAgo string
+		if !ps.LastWrite.IsZero() {
+			ago := data.Now.Sub(ps.LastWrite)
+			data.ActAgo = ago.Round(time.Second).String() + " ago"
+			if ago < 5*time.Minute {
+				data.ActAgo = "<b>" + data.ActAgo + "</b>"
+			}
+		}
+
+		// var owner string
+		if up, ok := st.User[ps.UserID]; ok {
+			data.Owner = up.LoginName
+			if i := strings.Index(data.Owner, "@"); i != -1 {
+				data.Owner = data.Owner[:i]
+			}
+		}
+
+		data.DNSName = dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
+
+		// // var tailAddr string
+		// var IPs []string
+		// for _, ip := range ps.TailscaleIPs {
+		// 	IPs = append(IPs, ip.String())
+		// }
+		data.TailAddr = data.IPs
 
 		if ps.Active {
 			if ps.Relay != "" && ps.CurAddr == "" {
-				f("relay <b>%s</b>", html.EscapeString(ps.Relay))
+				data.Connection = html.EscapeString(ps.Relay)
 			} else if ps.CurAddr != "" {
-				f("direct <b>%s</b>", html.EscapeString(ps.CurAddr))
+				data.Connection = html.EscapeString(ps.CurAddr)
 			}
 		}
-
-		f("</td>") // end Addrs
-
-		f("</tr>\n")
 	}
-	f("</tbody>\n</table>\n")
-	f("</body>\n</html>\n")
+
+	buf := new(bytes.Buffer)
+	if err := tmpl.Execute(buf, data); err != nil {
+		log.Printf("error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Printf("data %v", data)
+	fmt.Printf("buf %v", buf)
+	w.Write(buf.Bytes())
 }
+
+// func (st *Status) WriteHTML(w io.Writer) {
+// 	f := func(format string, args ...any) { fmt.Fprintf(w, format, args...) }
+
+// 	f(`<!DOCTYPE html>
+// <html lang="en">
+// <head>
+// <meta name="viewport" content="width=device-width,initial-scale=1">
+// <title>Tailscale State</title>
+// <style>
+// body { font-family: monospace; }
+// .owner { text-decoration: underline; }
+// .tailaddr { font-style: italic; }
+// .acenter { text-align: center; }
+// .aright { text-align: right; }
+// table, th, td { border: 1px solid black; border-spacing : 0; border-collapse : collapse; }
+// thead { background-color: #FFA500; }
+// th, td { padding: 5px; }
+// td { vertical-align: top; }
+// table tbody tr:nth-child(even) td { background-color: #f5f5f5; }
+// </style>
+// </head>
+// <body>
+// <h1>Tailscale State</h1>
+// `)
+
+// 	//f("<p><b>logid:</b> %s</p>\n", logid)
+// 	//f("<p><b>opts:</b> <code>%s</code></p>\n", html.EscapeString(fmt.Sprintf("%+v", opts)))
+
+// 	ips := make([]string, 0, len(st.TailscaleIPs))
+// 	for _, ip := range st.TailscaleIPs {
+// 		ips = append(ips, ip.String())
+// 	}
+// 	f("<p>Tailscale IP: %s", strings.Join(ips, ", "))
+
+// 	f("<table>\n<thead>\n")
+// 	f("<tr><th>ID</th><th>Peer</th><th>OS</th><th>Node</th><th>Hostname</th><th>Owner</th><th>IPs</th><th>Rx</th><th>Tx</th><th>Activity</th><th>Connection</th></tr>\n")
+// 	f("</thead>\n<tbody>\n")
+
+// 	now := time.Now()
+
+// 	var peers []*PeerStatus
+// 	for _, peer := range st.Peers() {
+// 		ps := st.Peer[peer]
+// 		if ps.ShareeNode {
+// 			continue
+// 		}
+// 		peers = append(peers, ps)
+// 	}
+// 	SortPeers(peers)
+
+// 	for _, ps := range peers {
+// 		// fmt.Printf("peer %#v", ps)
+// 		var actAgo string
+// 		if !ps.LastWrite.IsZero() {
+// 			ago := now.Sub(ps.LastWrite)
+// 			actAgo = ago.Round(time.Second).String() + " ago"
+// 			if ago < 5*time.Minute {
+// 				actAgo = "<b>" + actAgo + "</b>"
+// 			}
+// 		}
+// 		var owner string
+// 		if up, ok := st.User[ps.UserID]; ok {
+// 			owner = up.LoginName
+// 			if i := strings.Index(owner, "@"); i != -1 {
+// 				owner = owner[:i]
+// 			}
+// 		}
+
+// 		// hostName := dnsname.SanitizeHostname(ps.HostName)
+// 		dnsName := dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
+// 		// if strings.EqualFold(dnsName, hostName) || ps.UserID != st.Self.UserID {
+// 		// 	hostName = ""
+// 		// }
+// 		// var hostNameHTML string
+// 		// if hostName != "" {
+// 		// 	hostNameHTML = "<br>" + html.EscapeString(hostName)
+// 		// }
+// 		// fmt.Printf("ps hostname %s", ps.HostName)
+// 		// fmt.Printf("hostname %s", hostName)
+
+// 		var tailAddr string
+// 		var IPs []string
+// 		// if len(ps.TailscaleIPs) > 0 {
+// 		// 	tailAddr = ps.TailscaleIPs[0].String()
+// 		// }
+// 		for _, ip := range ps.TailscaleIPs {
+// 			IPs = append(IPs, ip.String())
+// 		}
+// 		tailAddr = strings.Join(IPs, ", ")
+// 		f(`<tr>
+// 			<td>%s</td>
+// 			<td class=acenter>%s</td>
+// 			<td>%s</td>
+// 			<td class=\"acenter owner\">%s</td>
+// 			<td><div class=\"tailaddr\">%s</div></td>
+// 			<td class=\"aright\">%s</td>
+// 			<td class=\"aright\">%s</td>
+// 			<td class=\"aright\">%d</td>
+// 			<td class=\"aright\">%d</td>
+// 			<td>%s</td>`,
+// 			ps.ID,
+// 			ps.PublicKey.ShortString(),
+// 			ps.OS,
+// 			html.EscapeString(dnsName),
+// 			html.EscapeString(ps.HostName),
+// 			html.EscapeString(owner),
+// 			tailAddr,
+// 			ps.RxBytes,
+// 			ps.TxBytes,
+// 			actAgo,
+// 		)
+// 		f("<td>")
+
+// 		if ps.Active {
+// 			if ps.Relay != "" && ps.CurAddr == "" {
+// 				f("relay <b>%s</b>", html.EscapeString(ps.Relay))
+// 			} else if ps.CurAddr != "" {
+// 				f("direct <b>%s</b>", html.EscapeString(ps.CurAddr))
+// 			}
+// 		}
+
+// 		f("</td>") // end Addrs
+
+// 		f("</tr>\n")
+// 	}
+// 	f("</tbody>\n</table>\n")
+// 	f("</body>\n</html>\n")
+// }
 
 func osEmoji(os string) string {
 	switch os {
