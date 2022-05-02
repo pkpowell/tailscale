@@ -56,7 +56,10 @@
 			</svg>
 			<h4 class="font-semibold truncate mr-2">{{.DeviceName}}</h4>
 		</div>
-		<h5>{{.IP}}</h5>
+		<!-- <h5>{{.IP}}</h5> -->
+		{{range .IPs}}
+			<h5>{{.}}</h5>
+		{{end}}
 	</div>
 	{{ end }}
 	{{ if or (eq .Status "NeedsLogin") (eq .Status "NoState") }}
