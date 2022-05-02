@@ -382,7 +382,7 @@ table tbody tr:nth-child(even) td { background-color: #f5f5f5; }
 	f("<p>Tailscale IP: %s", strings.Join(ips, ", "))
 
 	f("<table>\n<thead>\n")
-	f("<tr><th>Peer</th><th>OS</th><th>Node</th><th>Owner</th><th>Rx</th><th>Tx</th><th>Activity</th><th>Connection</th></tr>\n")
+	f("<tr><th>ID</th><th>Peer</th><th>OS</th><th>Node</th><th>Hostname</th><th>Owner</th><th>IPs</th><th>Rx</th><th>Tx</th><th>Activity</th><th>Connection</th></tr>\n")
 	f("</thead>\n<tbody>\n")
 
 	now := time.Now()
@@ -398,6 +398,7 @@ table tbody tr:nth-child(even) td { background-color: #f5f5f5; }
 	SortPeers(peers)
 
 	for _, ps := range peers {
+		// fmt.Printf("peer %#v", ps)
 		var actAgo string
 		if !ps.LastWrite.IsZero() {
 			ago := now.Sub(ps.LastWrite)
@@ -414,28 +415,45 @@ table tbody tr:nth-child(even) td { background-color: #f5f5f5; }
 			}
 		}
 
-		hostName := dnsname.SanitizeHostname(ps.HostName)
+		// hostName := dnsname.SanitizeHostname(ps.HostName)
 		dnsName := dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
-		if strings.EqualFold(dnsName, hostName) || ps.UserID != st.Self.UserID {
-			hostName = ""
-		}
-		var hostNameHTML string
-		if hostName != "" {
-			hostNameHTML = "<br>" + html.EscapeString(hostName)
-		}
+		// if strings.EqualFold(dnsName, hostName) || ps.UserID != st.Self.UserID {
+		// 	hostName = ""
+		// }
+		// var hostNameHTML string
+		// if hostName != "" {
+		// 	hostNameHTML = "<br>" + html.EscapeString(hostName)
+		// }
+		// fmt.Printf("ps hostname %s", ps.HostName)
+		// fmt.Printf("hostname %s", hostName)
 
 		var tailAddr string
-		if len(ps.TailscaleIPs) > 0 {
-			tailAddr = ps.TailscaleIPs[0].String()
+		var IPs []string
+		// if len(ps.TailscaleIPs) > 0 {
+		// 	tailAddr = ps.TailscaleIPs[0].String()
+		// }
+		for _, ip := range ps.TailscaleIPs {
+			IPs = append(IPs, ip.String())
 		}
-		f("<tr><td>%s</td><td class=acenter>%s</td>"+
-			"<td><b>%s</b>%s<div class=\"tailaddr\">%s</div></td><td class=\"acenter owner\">%s</td><td class=\"aright\">%v</td><td class=\"aright\">%v</td><td class=\"aright\">%v</td>",
+		tailAddr = strings.Join(IPs, ", ")
+		f(`<tr>
+			<td>%s</td>
+			<td class=acenter>%s</td>
+			<td>%s</td>
+			<td class=\"acenter owner\">%s</td>
+			<td><div class=\"tailaddr\">%s</div></td>
+			<td class=\"aright\">%s</td>
+			<td class=\"aright\">%s</td>
+			<td class=\"aright\">%d</td>
+			<td class=\"aright\">%d</td>
+			<td>%s</td>`,
+			ps.ID,
 			ps.PublicKey.ShortString(),
-			osEmoji(ps.OS),
+			ps.OS,
 			html.EscapeString(dnsName),
-			hostNameHTML,
-			tailAddr,
+			html.EscapeString(ps.HostName),
 			html.EscapeString(owner),
+			tailAddr,
 			ps.RxBytes,
 			ps.TxBytes,
 			actAgo,

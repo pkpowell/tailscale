@@ -382,11 +382,7 @@ func webHandler(w http.ResponseWriter, r *http.Request) {
 	if len(st.TailscaleIPs) != 0 {
 		for _, ip := range st.TailscaleIPs {
 			data.IPs = append(data.IPs, ip.String())
-			// if ip.Is4() {
-			// 	data.IP = ip.String()
-			// }
 		}
-		data.IP = st.TailscaleIPs[0].String()
 	}
 
 	buf := new(bytes.Buffer)
