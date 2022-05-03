@@ -8,12 +8,12 @@
 package ipnstate
 
 import (
+	"bytes"
 	"fmt"
 	"html"
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -460,12 +460,20 @@ table tbody tr:nth-child(even) td {
 </body>
 `
 
+var tmpl *template.Template
+var webHTML string
+var webCSS string
+
 func init() {
-	cwd, _ := os.Getwd()
-	fmt.Printf("cwd %s\n\n", cwd)
 	// var err error
 	t = template.Must(template.New("status").Parse(tp))
 	// template.Must(t.New("style").Parse(st))
+
+	tmpl = template.Must(template.New("ipn/ipnstate/status.html").Parse("html"))
+	template.Must(tmpl.New("ipn/ipnstate/status.css").Parse("css"))
+
+	// tmpl.set[name] = "status"
+	fmt.Printf("webHTML %s\n\n", webHTML)
 
 	// t, err := t.Parse(webHTML)
 	// if err != nil {
@@ -477,7 +485,6 @@ func init() {
 	}
 
 	fmt.Printf("template name %s\n\n", t.Name())
-	// fmt.Printf("webHTML %s", webHTML)
 	// if err != nil {
 	// 	fmt.Printf("error %v", err)
 	// 	return
@@ -561,16 +568,16 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		}
 	}
 
-	// buf := new(bytes.Buffer)
-	if err := t.Execute(w, data); err != nil {
+	buf := new(bytes.Buffer)
+	if err := tmpl.Execute(buf, data); err != nil {
 		// if err := t.ExecuteTemplate(w, "status", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		fmt.Printf("an error happened %v", err)
 		// panic(err)
 	}
+	w.Write(buf.Bytes())
 	// fmt.Printf("data %v", data)
 	// fmt.Printf("buf %v", buf)
-	// w.Write(buf.Bytes())
 }
 
 // func (st *Status) WriteHTML(w io.Writer) {
