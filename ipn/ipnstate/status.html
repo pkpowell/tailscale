@@ -47,8 +47,20 @@
                 {{range .IPs}}
                     <h5>{{.}}</h5>
                 {{end}}
+                <div>
+                    <div>Health{{.Health}}</div>
+                    <div></div>BackendState{{.BackendState}}</div>
+                    <div></div>Version{{.Version}}</div>
+                    {{with .CurrentTailnet}}
+                    <div>Tailnet Name {{.Name}}</div>
+                    <div>DNS Suffix {{.MagicDNSSuffix}}</div>
+                    <div>DNS Suffix {{.MagicDNSSuffix}}</div>
+                    <div>Magic DNS Enabled {{.MagicDNSEnabled}}</div>
+                    {{end}}
+                </div>
             </div>
             {{ end }}
+
         </header>
 
         <p>

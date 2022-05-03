@@ -351,11 +351,15 @@ type StatusUpdater interface {
 }
 
 type statusData struct {
-	Peers      []peerData
-	Profile    tailcfg.UserProfile
-	DeviceName string
-	IPs        []string
-	Now        time.Time
+	Peers          []peerData
+	Profile        tailcfg.UserProfile
+	DeviceName     string
+	BackendState   string
+	Version        string
+	CurrentTailnet *TailnetStatus
+	Health         []string
+	IPs            []string
+	Now            time.Time
 }
 
 type peerData struct {
@@ -391,7 +395,13 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	var data statusData
 	data.Profile = st.User[st.Self.UserID]
 	data.Now = time.Now()
+	data.Version = st.Version
+	data.Health = st.Health
+	data.BackendState = st.BackendState
+	data.CurrentTailnet = st.CurrentTailnet
 	data.DeviceName = strings.Split(st.Self.DNSName, ".")[0]
+
+	fmt.Printf("st.CurrentTailnet %#v", st.CurrentTailnet)
 
 	var peers []*PeerStatus
 	for _, peer := range st.Peers() {
