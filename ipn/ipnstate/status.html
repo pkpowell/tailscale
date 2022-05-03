@@ -1,46 +1,54 @@
-{{template "status"}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tailscale State</title>
-
+<style>
+{{template "status.css"}}
+</style>
 </head>
-<body>
-<h1>Tailscale State</h1>
-    <p>Tailscale IP: 
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Peer</th>
-                    <th>OS</th>
-                    <th>Node</th>
-                    <th>Hostname</th>
-                    <th>Owner</th>
-                    <th>IPs</th>
-                    <th>Rx</th>
-                    <th>Tx</th>
-                    <th>Activity</th>
-                    <th>Connection</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{range .}}
-                <tr>
-                    <td>{{.ID}}</td>
-                    <td class=acenter>.Peer</td>
-                    <td>.OS</td>
-                    <td class=\"acenter owner\">{{.Owner}}</td>
-                    <td><div class=\"tailaddr\">{{.IPs}}</div></td>
-                    <td class=\"aright\"></td>
-                    <td class=\"aright\"></td>
-                    <td class=\"aright\"></td>
-                    <td class=\"aright\"></td>
-                    <td></td>
-                </tr>
-                {{end}}
-            </tbody>
-        </table>
-    </p>
+<body class="py-14">
+    <div class="container mx-auto py-4 px-4 bg-white rounded-md shadow-2xl" style="width: 95%">
+        <h1>Tailscale State</h1>
+        <p>Tailscale IPs: <span>{{range .IPs}}<div>{{.}}</div>{{end}}</span>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Node</th>
+                        <th>Hostname</th>
+                        <th>DNS name</th>
+                        <th>OS</th>
+                        <th>Owner</th>
+                        <th>IPs</th>
+                        <th class="rx">Rx</th>
+                        <th class="rx">Tx</th>
+                        <th>Activity</th>
+                        <th>Connection</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Peers}}
+                    <tr>
+                        <td class="id">{{.ID}}</td>
+                        <td class="peer acenter">{{.Peer}}</td>
+                        <td class="hostname acenter">{{.HostName}}</td>
+                        <td class="dnsname acenter">{{.DNSName}}</td>
+                        <td class="os acenter">{{.OS}}</td>
+                        <td class="owner acenter">{{.Owner}}</td>
+                        <td>
+                        {{range .IPs}}
+                        <div class="tailaddr">{{.}}</div>
+                        {{end}}
+                        </td>
+                        <td class="rx aright">{{.RX}}</td>
+                        <td class="tx aright">{{.TX}}</td>
+                        <td class="activity aright">{{.ActAgo}}</td>
+                        <td class="connection ">{{.Connection}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </p>
+    </div>
 </body>

@@ -9,6 +9,7 @@ package ipnstate
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"html"
 	"html/template"
@@ -371,129 +372,17 @@ type peerData struct {
 	RX         int64
 }
 
-var t *template.Template
-
-const tp = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tailscale State</title>
-<style>
-body { 
-    font-family: verdana; 
-	font-size: 12px;
-}
-.owner { 
-    // text-decoration: underline; 
-}
-.tailaddr { 
-	text-align: right; 
-}
-.acenter { 
-    text-align: center; 
-}
-.aright { 
-    text-align: right; 
-}
-table, th, td { 
-	border: 1px solid gray; 
-    border-spacing : 0; 
-    border-collapse : collapse; 
-}
-thead { 
-    background-color: #FFA500; 
-}
-th, td { 
-    padding: 5px; 
-}
-td { 
-    vertical-align: top; 
-}
-table tbody tr:nth-child(even) td { 
-    background-color: #f5f5f5; 
-}
-</style>
-</head>
-<body>
-<h1>Tailscale State</h1>
-    <p>Tailscale IPs: <span>{{range .IPs}}<div>{{.}}</div>{{end}}</span>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Node</th>
-                    <th>Hostname</th>
-                    <th>DNS name</th>
-                    <th>OS</th>
-                    <th>Owner</th>
-                    <th>IPs</th>
-                    <th class="rx">Rx</th>
-                    <th class="rx">Tx</th>
-                    <th>Activity</th>
-                    <th>Connection</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{range .Peers}}
-                <tr>
-                    <td class="id">{{.ID}}</td>
-                    <td class="peer acenter">{{.Peer}}</td>
-                    <td class="hostname acenter">{{.HostName}}</td>
-                    <td class="dnsname acenter">{{.DNSName}}</td>
-                    <td class="os acenter">{{.OS}}</td>
-                    <td class="owner acenter">{{.Owner}}</td>
-                    <td>
-					{{range .IPs}}
-					<div class="tailaddr">{{.}}</div>
-					{{end}}
-					</td>
-                    <td class="rx aright">{{.RX}}</td>
-                    <td class="tx aright">{{.TX}}</td>
-                    <td class="activity aright">{{.ActAgo}}</td>
-                    <td class="connection ">{{.Connection}}</td>
-                </tr>
-                {{end}}
-            </tbody>
-        </table>
-    </p>
-</body>
-`
-
 var tmpl *template.Template
+
+//go:embed status.html
 var webHTML string
+
+//go:embed status.css
 var webCSS string
 
 func init() {
-	// var err error
-	t = template.Must(template.New("status").Parse(tp))
-	// template.Must(t.New("style").Parse(st))
-
-	tmpl = template.Must(template.New("ipn/ipnstate/status.html").Parse("html"))
-	template.Must(tmpl.New("ipn/ipnstate/status.css").Parse("css"))
-
-	// tmpl.set[name] = "status"
-	fmt.Printf("webHTML %s\n\n", webHTML)
-
-	// t, err := t.Parse(webHTML)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	if t == nil {
-		panic("an error occured")
-	}
-
-	fmt.Printf("template name %s\n\n", t.Name())
-	// if err != nil {
-	// 	fmt.Printf("error %v", err)
-	// 	return
-	// }
-	// template.Must(tmpl.New("./status.css").Parse(webCSS))
-	// err := t.Execute(os.Stdout, nil)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	tmpl = template.Must(template.New("status.html").Parse(webHTML))
+	template.Must(tmpl.New("status.css").Parse(webCSS))
 }
 
 func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
@@ -517,6 +406,9 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	for _, ip := range st.TailscaleIPs {
 		data.IPs = append(data.IPs, ip.String())
 	}
+
+	fmt.Printf("user %v", st.User)
+	// data.User = st.User
 
 	for i, ps := range peers {
 		data.Peers[i].ID = ps.ID
@@ -576,8 +468,6 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		// panic(err)
 	}
 	w.Write(buf.Bytes())
-	// fmt.Printf("data %v", data)
-	// fmt.Printf("buf %v", buf)
 }
 
 // func (st *Status) WriteHTML(w io.Writer) {
