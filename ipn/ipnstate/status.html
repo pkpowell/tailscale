@@ -4,13 +4,54 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tailscale State</title>
 <style>
-{{template "status.css"}}
+{{ template "status.css" }}
 </style>
 </head>
 <body class="py-14">
     <div class="container mx-auto py-4 px-4 bg-white rounded-md shadow-2xl" style="width: 95%">
-        <h1>Tailscale State</h1>
-        <p>Tailscale IPs: <span>{{range .IPs}}<div>{{.}}</div>{{end}}</span>
+        <header class="flex justify-between items-center min-width-0 py-2 mb-8">
+            <svg width="26" height="26" viewBox="0 0 23 23" title="Tailscale" fill="none" xmlns="http://www.w3.org/2000/svg"
+                class="flex-shrink-0 mr-4">
+                <circle opacity="0.2" cx="3.4" cy="3.25" r="2.7" fill="currentColor"></circle>
+                <circle cx="3.4" cy="11.3" r="2.7" fill="currentColor"></circle>
+                <circle opacity="0.2" cx="3.4" cy="19.5" r="2.7" fill="currentColor"></circle>
+                <circle cx="11.5" cy="11.3" r="2.7" fill="currentColor"></circle>
+                <circle cx="11.5" cy="19.5" r="2.7" fill="currentColor"></circle>
+                <circle opacity="0.2" cx="11.5" cy="3.25" r="2.7" fill="currentColor"></circle>
+                <circle opacity="0.2" cx="19.5" cy="3.25" r="2.7" fill="currentColor"></circle>
+                <circle cx="19.5" cy="11.3" r="2.7" fill="currentColor"></circle>
+                <circle opacity="0.2" cx="19.5" cy="19.5" r="2.7" fill="currentColor"></circle>
+            </svg>
+            <div class="flex items-center justify-end space-x-2 w-2/3">
+                {{ with .Profile.LoginName }}
+                <div class="text-right truncate leading-4">
+                    <h4 class="truncate leading-normal">{{.}}</h4>
+                </div>
+                {{ end }}
+            </div>
+
+            {{ if .IPs }}
+            <div
+                class="border border-gray-200 bg-gray-0 rounded-lg p-2 pl-3 pr-3 mb-8 width-full flex items-center justify-between">
+                <div class="flex items-center min-width-0">
+                    <svg class="flex-shrink-0 text-gray-600 mr-3 ml-1" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                        <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                        <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                        <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                    </svg>
+                    <h4 class="font-semibold truncate mr-2">{{.DeviceName}}</h4>
+                </div>
+                {{range .IPs}}
+                    <h5>{{.}}</h5>
+                {{end}}
+            </div>
+            {{ end }}
+        </header>
+
+        <p>
             <table>
                 <thead>
                     <tr>
