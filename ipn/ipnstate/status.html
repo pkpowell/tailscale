@@ -7,8 +7,8 @@
 {{ template "status.css" }}
 </style>
 </head>
-<body class="py-14">
-    <div class="container mx-auto py-4 px-4 bg-white rounded-md shadow-2xl" style="width: 95%">
+<body>
+    <div class="bg-gray-100 border-b border-gray-200 mb-6">
         <header class="flex justify-between items-center min-width-0 py-2 mb-8">
             <svg width="26" height="26" viewBox="0 0 23 23" title="Tailscale" fill="none" xmlns="http://www.w3.org/2000/svg"
                 class="flex-shrink-0 mr-4">
@@ -22,6 +22,7 @@
                 <circle cx="19.5" cy="11.3" r="2.7" fill="currentColor"></circle>
                 <circle opacity="0.2" cx="19.5" cy="19.5" r="2.7" fill="currentColor"></circle>
             </svg>
+
             <div class="flex items-center justify-end space-x-2 w-2/3">
                 {{ with .Profile.LoginName }}
                 <div class="text-right truncate leading-4">
@@ -29,6 +30,7 @@
                 </div>
                 {{ end }}
             </div>
+
 
             {{ if .IPs }}
             <div
@@ -49,21 +51,24 @@
                     <h5>{{.}}</h5>
                 {{end}}
                 </div>
-                <div class="flex items-center min-width-0">
-                    <div>Health{{.Health}}</div>
-                    <div>BackendState{{.BackendState}}</div>
-                    <div>Version{{.Version}}</div>
-                    {{with .CurrentTailnet}}
-                    <div>Tailnet Name {{.Name}}</div>
-                    <div>DNS Suffix {{.MagicDNSSuffix}}</div>
-                    <div>DNS Suffix {{.MagicDNSSuffix}}</div>
-                    <div>Magic DNS Enabled {{.MagicDNSEnabled}}</div>
-                    {{end}}
-                </div>
+                
+                
             </div>
             {{ end }}
 
         </header>
+
+        <div class="flex items-center min-width-0">
+            <div>Health{{.Health}}</div>
+            <div>BackendState{{.BackendState}}</div>
+            <div>Version{{.Version}}</div>
+            {{with .CurrentTailnet}}
+            <div>Tailnet Name {{.Name}}</div>
+            <div>DNS Suffix {{.MagicDNSSuffix}}</div>
+            <div>DNS Suffix {{.MagicDNSSuffix}}</div>
+            <div>Magic DNS Enabled {{.MagicDNSEnabled}}</div>
+            {{end}}
+        </div>
 
         <p>
             <table>
