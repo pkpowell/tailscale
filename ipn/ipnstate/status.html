@@ -44,13 +44,15 @@
                     </svg>
                     <h4 class="font-semibold truncate mr-2">{{.DeviceName}}</h4>
                 </div>
+                <div class="flex items-center min-width-0">
                 {{range .IPs}}
                     <h5>{{.}}</h5>
                 {{end}}
-                <div>
+                </div>
+                <div class="flex items-center min-width-0">
                     <div>Health{{.Health}}</div>
-                    <div></div>BackendState{{.BackendState}}</div>
-                    <div></div>Version{{.Version}}</div>
+                    <div>BackendState{{.BackendState}}</div>
+                    <div>Version{{.Version}}</div>
                     {{with .CurrentTailnet}}
                     <div>Tailnet Name {{.Name}}</div>
                     <div>DNS Suffix {{.MagicDNSSuffix}}</div>
