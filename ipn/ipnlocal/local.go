@@ -935,8 +935,7 @@ func (b *LocalBackend) Start(opts ipn.Options) error {
 	httpTestClient := b.httpTestClient
 
 	if b.hostinfo != nil {
-		hostinfo.Services = b.hostinfo.Services // keep any previous session and netinfo
-		hostinfo.NetInfo = b.hostinfo.NetInfo
+		hostinfo.Services = b.hostinfo.Services // keep any previous services
 	}
 	b.hostinfo = hostinfo
 	b.state = ipn.NoState
@@ -1699,15 +1698,20 @@ func (b *LocalBackend) StartLoginInteractive() {
 	}
 }
 
-func (b *LocalBackend) Ping(ipStr string, useTSMP bool) {
-	ip, err := netaddr.ParseIP(ipStr)
-	if err != nil {
-		b.logf("ignoring Ping request to invalid IP %q", ipStr)
-		return
-	}
-	b.e.Ping(ip, useTSMP, func(pr *ipnstate.PingResult) {
-		b.send(ipn.Notify{PingResult: pr})
+func (b *LocalBackend) Ping(ctx context.Context, ip netaddr.IP, pingType tailcfg.PingType) (*ipnstate.PingResult, error) {
+	ch := make(chan *ipnstate.PingResult, 1)
+	b.e.Ping(ip, pingType, func(pr *ipnstate.PingResult) {
+		select {
+		case ch <- pr:
+		default:
+		}
 	})
+	select {
+	case pr := <-ch:
+		return pr, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 // parseWgStatusLocked returns an EngineStatus based on s.
@@ -2870,9 +2874,6 @@ func (b *LocalBackend) assertClientLocked() {
 func (b *LocalBackend) setNetInfo(ni *tailcfg.NetInfo) {
 	b.mu.Lock()
 	cc := b.cc
-	if b.hostinfo != nil {
-		b.hostinfo.NetInfo = ni.Clone()
-	}
 	b.mu.Unlock()
 
 	if cc == nil {

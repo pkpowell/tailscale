@@ -80,12 +80,12 @@ type Direct struct {
 	sfGroup     singleflight.Group // protects noiseClient creation.
 	noiseClient *noiseClient
 
-	persist      persist.Persist
-	authKey      string
-	tryingNewKey key.NodePrivate
-	expiry       *time.Time
-	// hostinfo is mutated in-place while mu is held.
+	persist       persist.Persist
+	authKey       string
+	tryingNewKey  key.NodePrivate
+	expiry        *time.Time
 	hostinfo      *tailcfg.Hostinfo // always non-nil
+	netinfo       *tailcfg.NetInfo
 	endpoints     []tailcfg.Endpoint
 	everEndpoints bool   // whether we've ever had non-empty endpoints
 	localPort     uint16 // or zero to mean auto
@@ -126,9 +126,9 @@ type Options struct {
 
 // Pinger is a subset of the wgengine.Engine interface, containing just the Ping method.
 type Pinger interface {
-	// Ping is a request to start a discovery or TSMP ping with the peer handling
-	// the given IP and then call cb with its ping latency & method.
-	Ping(ip netaddr.IP, useTSMP bool, cb func(*ipnstate.PingResult))
+	// Ping is a request to start a ping with the peer handling the given IP and
+	// then call cb with its ping latency & method.
+	Ping(ip netaddr.IP, pingType tailcfg.PingType, cb func(*ipnstate.PingResult))
 }
 
 type Decompressor interface {
@@ -208,7 +208,12 @@ func NewDirect(opts Options) (*Direct, error) {
 	if opts.Hostinfo == nil {
 		c.SetHostinfo(hostinfo.New())
 	} else {
+		ni := opts.Hostinfo.NetInfo
+		opts.Hostinfo.NetInfo = nil
 		c.SetHostinfo(opts.Hostinfo)
+		if ni != nil {
+			c.SetNetInfo(ni)
+		}
 	}
 	return c, nil
 }
@@ -253,14 +258,11 @@ func (c *Direct) SetNetInfo(ni *tailcfg.NetInfo) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if c.hostinfo == nil {
-		c.logf("[unexpected] SetNetInfo called with no HostInfo; ignoring NetInfo update: %+v", ni)
+	if reflect.DeepEqual(ni, c.netinfo) {
 		return false
 	}
-	if reflect.DeepEqual(ni, c.hostinfo.NetInfo) {
-		return false
-	}
-	c.hostinfo.NetInfo = ni.Clone()
+	c.netinfo = ni.Clone()
+	c.logf("NetInfo: %v", ni)
 	return true
 }
 
@@ -337,6 +339,14 @@ type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// hostInfoLocked returns a Clone of c.hostinfo and c.netinfo.
+// It must only be called with c.mu held.
+func (c *Direct) hostInfoLocked() *tailcfg.Hostinfo {
+	hi := c.hostinfo.Clone()
+	hi.NetInfo = c.netinfo.Clone()
+	return hi
+}
+
 func (c *Direct) doLogin(ctx context.Context, opt loginOpt) (mustRegen bool, newURL string, err error) {
 	c.mu.Lock()
 	persist := c.persist
@@ -344,7 +354,7 @@ func (c *Direct) doLogin(ctx context.Context, opt loginOpt) (mustRegen bool, new
 	serverKey := c.serverKey
 	serverNoiseKey := c.serverNoiseKey
 	authKey := c.authKey
-	hi := c.hostinfo.Clone()
+	hi := c.hostInfoLocked()
 	backendLogID := hi.BackendLogID
 	expired := c.expiry != nil && !c.expiry.IsZero() && c.expiry.Before(c.timeNow())
 	c.mu.Unlock()
@@ -646,7 +656,7 @@ func (c *Direct) sendMapRequest(ctx context.Context, maxPolls int, cb func(*netm
 	serverURL := c.serverURL
 	serverKey := c.serverKey
 	serverNoiseKey := c.serverNoiseKey
-	hi := c.hostinfo.Clone()
+	hi := c.hostInfoLocked()
 	backendLogID := hi.BackendLogID
 	localPort := c.localPort
 	var epStrs []string
@@ -1197,11 +1207,10 @@ func answerPing(logf logger.Logf, c *http.Client, pr *tailcfg.PingRequest, pinge
 		return
 	}
 	for _, t := range strings.Split(pr.Types, ",") {
-		switch t {
-		case "TSMP", "disco":
-			go doPingerPing(logf, c, pr, pinger, t)
+		switch pt := tailcfg.PingType(t); pt {
+		case tailcfg.PingTSMP, tailcfg.PingDisco, tailcfg.PingICMP:
+			go doPingerPing(logf, c, pr, pinger, pt)
 		// TODO(tailscale/corp#754)
-		// case "host":
 		// case "peerapi":
 		default:
 			logf("unsupported ping request type: %q", t)
@@ -1402,13 +1411,13 @@ func (c *Direct) DoNoiseRequest(req *http.Request) (*http.Response, error) {
 
 // doPingerPing sends a Ping to pr.IP using pinger, and sends an http request back to
 // pr.URL with ping response data.
-func doPingerPing(logf logger.Logf, c *http.Client, pr *tailcfg.PingRequest, pinger Pinger, pingType string) {
+func doPingerPing(logf logger.Logf, c *http.Client, pr *tailcfg.PingRequest, pinger Pinger, pingType tailcfg.PingType) {
 	if pr.URL == "" || pr.IP.IsZero() || pinger == nil {
 		logf("invalid ping request: missing url, ip or pinger")
 		return
 	}
 	start := time.Now()
-	pinger.Ping(pr.IP, pingType == "TSMP", func(res *ipnstate.PingResult) {
+	pinger.Ping(pr.IP, pingType, func(res *ipnstate.PingResult) {
 		// Currently does not check for error since we just return if it fails.
 		postPingResult(start, logf, c, pr, res.ToPingResponse(pingType))
 	})
