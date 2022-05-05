@@ -359,11 +359,15 @@ type statusData struct {
 	CurrentTailnet *TailnetStatus
 	Health         []string
 	IPs            []string
+	IPv4           string
+	IPv6           string
 	Now            time.Time
 }
 
 type peerData struct {
 	IPs        []string
+	IPv4       string
+	IPv6       string
 	Peer       string
 	ActAgo     string
 	OverDue    bool
@@ -427,7 +431,12 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 
 	data.IPs = make([]string, 0, len(st.TailscaleIPs))
 	for _, ip := range st.TailscaleIPs {
-		data.IPs = append(data.IPs, ip.String())
+		if ip.Is4() {
+			data.IPv4 = ip.String()
+		} else {
+			data.IPv6 = ip.String()
+		}
+		// data.IPs = append(data.IPs, ip.String())
 	}
 
 	for i, ps := range peers {
@@ -439,7 +448,12 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		// 		dnsName := dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
 		data.Peers[i].IPs = make([]string, 0, len(ps.TailscaleIPs))
 		for _, ip := range ps.TailscaleIPs {
-			data.Peers[i].IPs = append(data.Peers[i].IPs, ip.String())
+			if ip.Is4() {
+				data.Peers[i].IPv4 = ip.String()
+			} else {
+				data.Peers[i].IPv6 = ip.String()
+			}
+			// data.Peers[i].IPs = append(data.Peers[i].IPs, ip.String())
 		}
 		if !ps.LastWrite.IsZero() {
 			ago := data.Now.Sub(ps.LastWrite)
@@ -466,8 +480,8 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		if ps.Active {
 			if ps.Relay != "" && ps.CurAddr == "" {
 				data.Peers[i].Connection = html.EscapeString(ps.Relay)
-			} else if ps.CurAddr != "" {
-				data.Peers[i].Connection = html.EscapeString(ps.CurAddr)
+				// } else if ps.CurAddr != "" {
+				// 	data.Peers[i].Connection = html.EscapeString(ps.CurAddr)
 			}
 		}
 	}
