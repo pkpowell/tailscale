@@ -1394,6 +1394,21 @@ html {
 	display: flex;
 }
 
+.key {
+	font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    --tw-text-opacity: 1;
+    color: rgb(112 110 109 / var(--tw-text-opacity));
+    text-align: left;
+}
+
+/* .val {
+
+} */
+
 html,
     body {
       margin: 0;
