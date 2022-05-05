@@ -60,19 +60,48 @@
 
 
         <div style="width: 80%; margin: auto;">
-        <div class="items-center min-width-0" style="width: 80%; margin: auto;">
-            <div>Health{{.Health}}</div>
-            <div>BackendState{{.BackendState}}</div>
-            <div>Version{{.Version}}</div>
+        <div class="">
+            <div class="status keyval">
+                <span class="key md:w-1/5">STATUS</span>
+                <span class="val md:w-1/3">
+                    {{range .Health}}
+                        <div>{{.}}</div>
+                    {{else}}
+                    <div class="green">OK</div>
+                    {{end}}
+                </span>
+            </div>
+
+            <div class="backend keyval">
+                <span class="key md:w-1/5">Backend State</span>
+                <span class="val md:w-1/3">{{.BackendState}}</span>
+            </div>
+
+            <div class="backend keyval">
+                <span class="key md:w-1/5">Version</span> 
+                <span class="val md:w-1/3">{{.Version}}</span>
+            </div>
+            
             {{with .CurrentTailnet}}
-            <div>Tailnet Name {{.Name}}</div>
-            <div>DNS Suffix {{.MagicDNSSuffix}}</div>
-            <div>Magic DNS Enabled {{.MagicDNSEnabled}}</div>
+                <div class="tailnet keyval">
+                    <span class="key md:w-1/5">Tailnet Name</span> 
+                    <span class="val md:w-1/3">{{.Name}}</span>
+                </div>
+
+                <div class="suffix keyval">
+                    <span class="key md:w-1/5">DNS Suffix</span> 
+                    <span class="val md:w-1/3">{{.MagicDNSSuffix}}</span>
+                </div>
+
+                <div class="magic keyval">
+                    <span class="key md:w-1/5">Magic DNS Enabled</span> 
+                    <span class="val md:w-1/3">{{.MagicDNSEnabled}}</span>
+                </div>
             {{end}}
         </div>
 
         <p>
-            <h3>Machines</h3>
+            <h2>Machines</h3>
             <table class="tb">
                 <thead>
                     <tr class="w-full px-0.5 hover:bg-gray-0">
