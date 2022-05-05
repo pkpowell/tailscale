@@ -387,8 +387,19 @@ var webHTML string
 var webCSS string
 
 func init() {
-	tmpl = template.Must(template.New("status.html").Parse(webHTML))
-	template.Must(tmpl.New("status.css").Parse(webCSS))
+	// var err error
+	// // tmpl, err := template.New("statusHTML").ParseFiles("ipn/ipnstate/status.html")
+	// // if err != nil {
+	// // 	fmt.Printf("panicking\n\n")
+	// // 	panic(err)
+	// // }
+	// // tmpl.New("statusStyle").ParseFiles("ipn/ipnstate/status.css")
+	// tmpl, err = template.ParseFiles("ipn/ipnstate/status.html", "ipn/ipnstate/status.css")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	tmpl = template.Must(template.New("statusHTML").Parse(webHTML))
+	template.Must(tmpl.New("statusStyle").Parse(webCSS))
 }
 
 func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
