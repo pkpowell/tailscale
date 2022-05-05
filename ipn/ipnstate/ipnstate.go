@@ -412,7 +412,7 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	data.CurrentTailnet = st.CurrentTailnet
 	data.DeviceName = strings.Split(st.Self.DNSName, ".")[0]
 
-	fmt.Printf("st.CurrentTailnet %#v", st.CurrentTailnet)
+	// fmt.Printf("st.CurrentTailnet %#v", st.CurrentTailnet)
 
 	var peers []*PeerStatus
 	for _, peer := range st.Peers() {

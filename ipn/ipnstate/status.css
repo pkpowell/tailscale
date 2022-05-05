@@ -1399,6 +1399,25 @@ html {
 	margin: auto;
 }
 
+.opaque {
+	background-color: white;
+	z-index: 20;
+}
+
+/* .table-row {
+	overflow-y: auto;
+	overflow-x: hidden;
+} */
+
+.stick {
+	position: sticky;
+	top: 0;
+}
+
+/* .table-body {
+	overflow-y: auto;
+	overflow-x: hidden;
+} */
 /* .info {
 	padding
 } */
