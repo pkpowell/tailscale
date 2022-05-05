@@ -1394,7 +1394,16 @@ html {
 	display: flex;
 }
 
-.key {
+.cont {
+	width: 80%; 
+	margin: auto;
+}
+
+/* .info {
+	padding
+} */
+
+/* .key {
 	font-size: 0.75rem;
     line-height: 1rem;
     font-weight: 600;
@@ -1403,7 +1412,7 @@ html {
     --tw-text-opacity: 1;
     color: rgb(112 110 109 / var(--tw-text-opacity));
     text-align: left;
-}
+} */
 
 /* .val {
 
@@ -1961,6 +1970,10 @@ html,
   
 	.md\:w-1\/6 {
 	  width: 16.666667%;
+	}
+  
+	.md\:w-1\/8 {
+	  width: 12.5%;
 	}
   
 	.md\:w-12 {
