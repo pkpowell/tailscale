@@ -103,6 +103,8 @@
                         <th class="hidden md:block md:w-1/8">DNS</th>
                         <th class="hidden md:block md:w-1/12 text-right">rx</th>
                         <th class="hidden md:block md:w-1/12 text-right">tx</th>
+                        <!-- <th class="hidden md:block md:w-1/12 text-right">Online</th> -->
+                        <th class="hidden md:block md:w-1/12 text-right">Active</th>
                         <!-- <th class="flex justify-end ml-auto md:ml-0 w-1/6 lg:w-12"></th> -->
                     </tr>
                 </thead>
@@ -150,9 +152,11 @@
                         <td class="hidden md:block md:w-1/12 ">{{.OS}}</td>
                         <td class="hidden md:block md:w-1/12">{{.ActAgo}}</td>
                         <td class="hidden md:block md:w-1/12">{{.Connection}}</td>
-                        <td class="hidden md:block md:w-1/8 ">{{.DNSName}}</td>
+                        <td class="hidden md:block md:w-1/8 truncate">{{.DNSName}}</td>
                         <td class="hidden md:block md:w-1/12 text-right">{{.RX}}</td>
                         <td class="hidden md:block md:w-1/12 text-right">{{.TX}}</td>
+                        <!-- <td class="hidden md:block md:w-1/12 text-right">{{.Online}}</td> -->
+                        <td class="hidden md:block md:w-1/12 text-right">{{.Active}}</td>
                         <!-- <td class="flex justify-end ml-auto md:ml-0 w-1/6 lg:w-12 justify-items-end items-center md:items-start"></td> -->
 
                     </tr>

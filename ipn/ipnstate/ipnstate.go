@@ -371,6 +371,8 @@ type peerData struct {
 	Peer       string
 	ActAgo     string
 	OverDue    bool
+	Active     bool
+	Online     bool
 	OS         string
 	HostName   string
 	ID         tailcfg.StableNodeID
@@ -444,6 +446,8 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		data.Peers[i].Peer = ps.PublicKey.ShortString()
 		data.Peers[i].HostName = ps.HostName
 		data.Peers[i].OS = ps.OS
+		data.Peers[i].Online = ps.Online
+		data.Peers[i].Active = ps.Active
 		data.Peers[i].HostName = dnsname.SanitizeHostname(ps.HostName)
 		// 		dnsName := dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
 		data.Peers[i].IPs = make([]string, 0, len(ps.TailscaleIPs))
