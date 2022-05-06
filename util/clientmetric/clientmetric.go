@@ -304,3 +304,11 @@ func (b *deltaEncBuf) writeHexVarint(v int64) {
 	hex.Encode(hexBuf, b.scratch[:n])
 	b.buf.Write(hexBuf)
 }
+
+var TestHooks testHooks
+
+type testHooks struct{}
+
+func (testHooks) ResetLastDelta() {
+	lastDelta = time.Time{}
+}

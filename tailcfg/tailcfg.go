@@ -4,11 +4,10 @@
 
 package tailcfg
 
-//go:generate go run tailscale.com/cmd/cloner --type=User,Node,Hostinfo,NetInfo,Login,DNSConfig,RegisterResponse,DERPRegion,DERPMap,DERPNode --clonefunc=true --output=tailcfg_clone.go
+//go:generate go run tailscale.com/cmd/viewer --type=User,Node,Hostinfo,NetInfo,Login,DNSConfig,RegisterResponse,DERPRegion,DERPMap,DERPNode --clonefunc
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -20,7 +19,6 @@ import (
 	"tailscale.com/types/key"
 	"tailscale.com/types/opt"
 	"tailscale.com/types/structs"
-	"tailscale.com/types/views"
 	"tailscale.com/util/dnsname"
 )
 
@@ -477,132 +475,6 @@ type Hostinfo struct {
 	//       require changes to Hostinfo.Equal.
 }
 
-// View returns a read-only accessor for hi.
-func (hi *Hostinfo) View() HostinfoView { return HostinfoView{hi} }
-
-// HostinfoView is a read-only accessor for Hostinfo.
-// See Hostinfo.
-type HostinfoView struct {
-	// It is named distinctively to make you think of how dangerous it is to escape
-	// to callers. You must not let callers be able to mutate it.
-	ж *Hostinfo
-}
-
-func (v HostinfoView) MarshalJSON() ([]byte, error) {
-	return json.Marshal(v.ж)
-}
-
-func (v *HostinfoView) UnmarshalJSON(b []byte) error {
-	if v.ж != nil {
-		return errors.New("HostinfoView is already initialized")
-	}
-	if len(b) == 0 {
-		return nil
-	}
-	hi := &Hostinfo{}
-	if err := json.Unmarshal(b, hi); err != nil {
-		return err
-	}
-	v.ж = hi
-	return nil
-}
-
-// Valid reports whether the underlying value is not nil.
-func (v HostinfoView) Valid() bool { return v.ж != nil }
-
-// AsStruct returns a deep-copy of the underlying value.
-func (v HostinfoView) AsStruct() *Hostinfo { return v.ж.Clone() }
-
-func (v HostinfoView) IPNVersion() string         { return v.ж.IPNVersion }
-func (v HostinfoView) FrontendLogID() string      { return v.ж.FrontendLogID }
-func (v HostinfoView) BackendLogID() string       { return v.ж.BackendLogID }
-func (v HostinfoView) OS() string                 { return v.ж.OS }
-func (v HostinfoView) OSVersion() string          { return v.ж.OSVersion }
-func (v HostinfoView) Package() string            { return v.ж.Package }
-func (v HostinfoView) DeviceModel() string        { return v.ж.DeviceModel }
-func (v HostinfoView) Hostname() string           { return v.ж.Hostname }
-func (v HostinfoView) ShieldsUp() bool            { return v.ж.ShieldsUp }
-func (v HostinfoView) ShareeNode() bool           { return v.ж.ShareeNode }
-func (v HostinfoView) GoArch() string             { return v.ж.GoArch }
-func (v HostinfoView) Equal(v2 HostinfoView) bool { return v.ж.Equal(v2.ж) }
-
-func (v HostinfoView) RoutableIPs() views.IPPrefixSlice {
-	return views.IPPrefixSliceOf(v.ж.RoutableIPs)
-}
-
-func (v HostinfoView) RequestTags() views.Slice[string] {
-	return views.SliceOf(v.ж.RequestTags)
-}
-
-func (v HostinfoView) SSH_HostKeys() views.Slice[string] {
-	return views.SliceOf(v.ж.SSH_HostKeys)
-}
-
-func (v HostinfoView) Services() ServiceSlice {
-	return ServiceSliceOf(v.ж.Services)
-}
-
-func (v HostinfoView) NetInfo() NetInfoView { return v.ж.NetInfo.View() }
-
-// ServiceSlice is a read-only accessor for a slice of Services
-type ServiceSlice struct {
-	// It is named distinctively to make you think of how dangerous it is to escape
-	// to callers. You must not let callers be able to mutate it.
-	ж []Service
-}
-
-// ServiceSliceOf returns a ServiceSlice for the provided slice.
-func ServiceSliceOf(x []Service) ServiceSlice { return ServiceSlice{x} }
-
-// Len returns the length of the slice.
-func (v ServiceSlice) Len() int { return len(v.ж) }
-
-// At returns the Service at index `i` of the slice.
-func (v ServiceSlice) At(i int) Service { return v.ж[i] }
-
-// Append appends the underlying slice values to dst.
-func (v ServiceSlice) Append(dst []Service) []Service {
-	return append(dst, v.ж...)
-}
-
-// AsSlice returns a copy of underlying slice.
-func (v ServiceSlice) AsSlice() []Service {
-	return v.Append(v.ж[:0:0])
-}
-
-// NetInfoView is a read-only accessor for NetInfo.
-// See NetInfo.
-type NetInfoView struct {
-	// It is named distinctively to make you think of how dangerous it is to escape
-	// to callers. You must not let callers be able to mutate it.
-	ж *NetInfo
-}
-
-// Valid reports whether the underlying value is not nil.
-func (v NetInfoView) Valid() bool { return v.ж != nil }
-
-// AsStruct returns a deep-copy of the underlying value.
-func (v NetInfoView) AsStruct() *NetInfo { return v.ж.Clone() }
-
-func (v NetInfoView) MappingVariesByDestIP() opt.Bool { return v.ж.MappingVariesByDestIP }
-func (v NetInfoView) HairPinning() opt.Bool           { return v.ж.HairPinning }
-func (v NetInfoView) WorkingIPv6() opt.Bool           { return v.ж.WorkingIPv6 }
-func (v NetInfoView) WorkingUDP() opt.Bool            { return v.ж.WorkingUDP }
-func (v NetInfoView) HavePortMap() bool               { return v.ж.HavePortMap }
-func (v NetInfoView) UPnP() opt.Bool                  { return v.ж.UPnP }
-func (v NetInfoView) PMP() opt.Bool                   { return v.ж.PMP }
-func (v NetInfoView) PCP() opt.Bool                   { return v.ж.PCP }
-func (v NetInfoView) PreferredDERP() int              { return v.ж.PreferredDERP }
-func (v NetInfoView) LinkType() string                { return v.ж.LinkType }
-func (v NetInfoView) String() string                  { return v.ж.String() }
-
-// DERPLatencyForEach calls fn for each value in the DERPLatency map.
-func (v NetInfoView) DERPLatencyForEach(fn func(k string, v float64)) {
-	for k, v := range v.ж.DERPLatency {
-		fn(k, v)
-	}
-}
-
 // NetInfo contains information about the host's network state.
 type NetInfo struct {
 	// MappingVariesByDestIP says whether the host's NAT mappings
@@ -659,6 +531,13 @@ type NetInfo struct {
 	// Update BasicallyEqual when adding fields.
 }
 
+// DERPLatencyForEach calls fn for each value in the DERPLatency map.
+func (v NetInfoView) DERPLatencyForEach(fn func(k string, v float64)) {
+	for k, v := range v.ж.DERPLatency {
+		fn(k, v)
+	}
+}
+
 func (ni *NetInfo) String() string {
 	if ni == nil {
 		return "NetInfo(nil)"
@@ -680,9 +559,6 @@ func (ni *NetInfo) portMapSummary() string {
 	}
 	return prefix + conciseOptBool(ni.UPnP, "U") + conciseOptBool(ni.PMP, "M") + conciseOptBool(ni.PCP, "C")
 }
-
-// View returns a read-only accessor for ni.
-func (ni *NetInfo) View() NetInfoView { return NetInfoView{ni} }
 
 func conciseOptBool(b opt.Bool, trueVal string) string {
 	if b == "" {
@@ -1134,7 +1010,7 @@ var FilterAllowAll = []FilterRule{
 // DNSConfig is the DNS configuration.
 type DNSConfig struct {
 	// Resolvers are the DNS resolvers to use, in order of preference.
-	Resolvers []dnstype.Resolver `json:",omitempty"`
+	Resolvers []*dnstype.Resolver `json:",omitempty"`
 
 	// Routes maps DNS name suffixes to a set of DNS resolvers to
 	// use. It is used to implement "split DNS" and other advanced DNS
@@ -1146,13 +1022,13 @@ type DNSConfig struct {
 	// If the value is an empty slice, that means the suffix should still
 	// be handled by Tailscale's built-in resolver (100.100.100.100), such
 	// as for the purpose of handling ExtraRecords.
-	Routes map[string][]dnstype.Resolver `json:",omitempty"`
+	Routes map[string][]*dnstype.Resolver `json:",omitempty"`
 
 	// FallbackResolvers is like Resolvers, but is only used if a
 	// split DNS configuration is requested in a configuration that
 	// doesn't work yet without explicit default resolvers.
 	// https://github.com/tailscale/tailscale/issues/1743
-	FallbackResolvers []dnstype.Resolver `json:",omitempty"`
+	FallbackResolvers []*dnstype.Resolver `json:",omitempty"`
 	// Domains are the search domains to use.
 	// Search domains must be FQDNs, but *without* the trailing dot.
 	Domains []string `json:",omitempty"`
