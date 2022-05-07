@@ -5,9 +5,12 @@
 package ipnlocal
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"net"
 	"net/http"
@@ -62,6 +65,16 @@ import (
 	"tailscale.com/wgengine/wgcfg"
 	"tailscale.com/wgengine/wgcfg/nmcfg"
 )
+
+var tmpl *template.Template
+
+//go:embed local.html
+var HTML string
+
+func init() {
+	tmpl = template.Must(template.New("HTML").Parse(HTML))
+	// template.Must(tmpl.New("CSS").Parse(CSS))
+}
 
 var controlDebugFlags = getControlDebugFlags()
 var canSSH = envknob.CanSSHD()
@@ -3318,14 +3331,44 @@ func (b *LocalBackend) HandleSSHConn(c net.Conn) error {
 // HandleQuad100Port80Conn serves http://100.100.100.100/ on port 80 (and
 // the equivalent tsaddr.TailscaleServiceIPv6 address).
 func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
-	var s http.Server
-	s.Handler = http.HandlerFunc(b.handleQuad100Port80Conn)
-	s.Serve(netutil.NewOneConnListener(c, nil))
+	// var s http.Server
+	http.HandleFunc("/", b.handleQuad100Port80Conn)
+
+	fileServer := http.FileServer(http.Dir("/http"))
+	http.Handle("/static/", http.StripPrefix("/static", fileServer))
+
+	http.Serve(netutil.NewOneConnListener(c, nil), nil)
+
+	// s.Handler = http.HandlerFunc(b.handleQuad100Port80Conn)
+
+	// s.Serve(netutil.NewOneConnListener(c, nil))
+}
+
+type statusData struct {
+	Profile    tailcfg.UserProfile
+	DeviceName string
+	Backend    struct {
+		Version string
+		State   string
+		Health  []string
+	}
+	ServerURL string
+	Version   string
+	OS        string
+	OSVersion string
+	HostName  string
+	Health    []string
+	IPv4      string
+	IPv6      string
+	Now       time.Time
+	TX        int64
+	RX        int64
 }
 
 func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("Content-Security-Policy", "default-src 'self';")
+	// w.Header().Set("Content-Security-Policy", "default-src 'unsafe-inline';")
 	if r.Method != "GET" && r.Method != "HEAD" {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -3334,18 +3377,36 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	io.WriteString(w, "<h1>Tailscale</h1>\n")
-	if b.netMap == nil {
-		io.WriteString(w, "No netmap.\n")
-		return
-	}
-	if len(b.netMap.Addresses) == 0 {
-		io.WriteString(w, "No local addresses.\n")
-		return
-	}
-	io.WriteString(w, "<p>Local addresses:</p><ul>\n")
+	var data statusData
+
+	// data.Backend.Version = st.Version
+	// data.Backend.State = st.BackendState
+	// data.Backend.Health = st.Health
+
+	// fmt.Fprintf(w, "b.hostinfo.OS %s", b.hostinfo.OS)
+
+	data.OS = b.hostinfo.OS
+	data.OSVersion = b.hostinfo.OSVersion
+	data.HostName = b.hostinfo.Hostname
+	data.Version = b.hostinfo.IPNVersion
+
+	data.ServerURL = b.serverURL
+	data.Profile.LoginName = b.activeLogin
+	data.TX = b.engineStatus.WBytes
+	data.RX = b.engineStatus.RBytes
+
 	for _, ipp := range b.netMap.Addresses {
-		fmt.Fprintf(w, "<li>%v</li>\n", ipp.IP())
+		if ipp.IP().Is6() {
+			data.IPv6 = ipp.String()
+		} else {
+			data.IPv4 = ipp.String()
+		}
 	}
-	io.WriteString(w, "</ul>\n")
+
+	buf := new(bytes.Buffer)
+	if err := tmpl.Execute(buf, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Printf("an error happened %v", err)
+	}
+	w.Write(buf.Bytes())
 }
