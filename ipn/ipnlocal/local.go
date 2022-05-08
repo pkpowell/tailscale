@@ -7,7 +7,7 @@ package ipnlocal
 import (
 	"bytes"
 	"context"
-	_ "embed"
+	"embed"
 	"errors"
 	"fmt"
 	"html/template"
@@ -71,9 +71,15 @@ var tmpl *template.Template
 //go:embed local.html
 var HTML string
 
+//go:embed assets/*.css assets/*.html
+var assets embed.FS
+
 func init() {
-	tmpl = template.Must(template.New("HTML").Parse(HTML))
-	// template.Must(tmpl.New("CSS").Parse(CSS))
+	f, err := assets.ReadFile("assets/local.html")
+	if err != nil {
+		panic(err)
+	}
+	tmpl = template.Must(template.New("HTML").Parse(string(f)))
 }
 
 var controlDebugFlags = getControlDebugFlags()
@@ -3331,17 +3337,11 @@ func (b *LocalBackend) HandleSSHConn(c net.Conn) error {
 // HandleQuad100Port80Conn serves http://100.100.100.100/ on port 80 (and
 // the equivalent tsaddr.TailscaleServiceIPv6 address).
 func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
-	// var s http.Server
-	http.HandleFunc("/", b.handleQuad100Port80Conn)
+	mux := http.NewServeMux()
+	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
+	mux.HandleFunc("/", b.handleQuad100Port80Conn)
 
-	fileServer := http.FileServer(http.Dir("/http"))
-	http.Handle("/static/", http.StripPrefix("/static", fileServer))
-
-	http.Serve(netutil.NewOneConnListener(c, nil), nil)
-
-	// s.Handler = http.HandlerFunc(b.handleQuad100Port80Conn)
-
-	// s.Serve(netutil.NewOneConnListener(c, nil))
+	http.Serve(netutil.NewOneConnListener(c, nil), mux)
 }
 
 type statusData struct {
@@ -3368,7 +3368,6 @@ type statusData struct {
 func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("Content-Security-Policy", "default-src 'self';")
-	// w.Header().Set("Content-Security-Policy", "default-src 'unsafe-inline';")
 	if r.Method != "GET" && r.Method != "HEAD" {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
