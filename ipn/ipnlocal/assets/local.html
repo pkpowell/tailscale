@@ -99,6 +99,23 @@
                         <span class="key md:w-1/8">Version</span> 
                         <span class="val md:w-1/3">{{.Version}}</span>
                     </div>
+                    <div class="services keyval">
+                        <span class="key md:w-1/8">Services</span> 
+                        <span class="val md:w-1/3">
+                            {{range .Services}}
+                            <div>
+                                {{.Description}}
+                            </div>
+                            <div>
+                                {{.Port}}
+                            </div>
+                            <div>
+                                {{.Proto}}
+                            </div>
+                            {{end}}
+
+                        </span>
+                    </div>
                 </div>
             </div>
         </header>

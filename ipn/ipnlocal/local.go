@@ -3349,17 +3349,20 @@ type statusData struct {
 		State   string
 		Health  []string
 	}
-	ServerURL string
-	Version   string
-	OS        string
-	OSVersion string
-	HostName  string
-	Health    []string
-	IPv4      string
-	IPv6      string
-	Now       time.Time
-	TX        int64
-	RX        int64
+	ServerURL    string
+	Version      string
+	Arch         string
+	OS           string
+	OSVersion    string
+	HostName     string
+	Services     []tailcfg.Service
+	Health       []string
+	IPv4         string
+	IPv6         string
+	Now          time.Time
+	EngineStatus ipn.EngineStatus
+	TX           int64
+	RX           int64
 }
 
 func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
@@ -3385,11 +3388,14 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 	data.OSVersion = b.hostinfo.OSVersion
 	data.HostName = b.hostinfo.Hostname
 	data.Version = b.hostinfo.IPNVersion
+	data.Arch = b.hostinfo.GoArch
+	data.Services = b.hostinfo.Services
 
 	data.ServerURL = b.serverURL
 	data.Profile.LoginName = b.activeLogin
-	data.TX = b.engineStatus.WBytes
-	data.RX = b.engineStatus.RBytes
+	// data.TX = b.engineStatus.WBytes
+	// data.RX = b.engineStatus.RBytes
+	// data.EngineStatus = b.engineStatus
 
 	for _, ipp := range b.netMap.Addresses {
 		if ipp.IP().Is6() {
@@ -3405,4 +3411,6 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 		fmt.Printf("an error happened %v", err)
 	}
 	w.Write(buf.Bytes())
+
+	// fmt.Fprintf(w, "LivePeers %+v", b.engineStatus.LivePeers)
 }
