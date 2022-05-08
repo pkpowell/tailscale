@@ -68,11 +68,11 @@ import (
 
 var tmpl *template.Template
 
-//go:embed assets/*.css assets/*.html
+//go:embed assets/*.css assets/*.gohtml
 var assets embed.FS
 
 func init() {
-	f, err := assets.ReadFile("assets/local.html")
+	f, err := assets.ReadFile("assets/local.gohtml")
 	if err != nil {
 		panic(err)
 	}
@@ -3344,21 +3344,22 @@ func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
 type statusData struct {
 	Profile    tailcfg.UserProfile
 	DeviceName string
-	Backend    struct {
-		Version string
-		State   string
-		Health  []string
-	}
-	ServerURL    string
-	Version      string
-	Arch         string
-	OS           string
-	OSVersion    string
-	HostName     string
-	NetMap       *netmap.NetworkMap
-	LivePeers    map[key.NodePublic]ipnstate.PeerStatusLite
-	LiveDERPs    int
-	Endpoints    []tailcfg.Endpoint
+	NodeKey    string
+	StableID   tailcfg.StableNodeID
+	Created    string
+	// Backend    struct {
+	// 	Version string
+	// 	State   string
+	// 	Health  []string
+	// }
+	ServerURL string
+	Version   string
+	Arch      string
+	OS        string
+	OSVersion string
+	HostName  string
+	Name      string
+
 	Services     []tailcfg.Service
 	Health       []string
 	IPv4         string
@@ -3382,28 +3383,19 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 
 	var data statusData
 
-	// data.Backend.Version = st.Version
-	// data.Backend.State = st.BackendState
-	// data.Backend.Health = st.Health
-
-	// fmt.Fprintf(w, "b.hostinfo.OS %s", b.hostinfo.OS)
-
 	data.OS = b.hostinfo.OS
 	data.OSVersion = b.hostinfo.OSVersion
 	data.HostName = b.hostinfo.Hostname
 	data.Version = b.hostinfo.IPNVersion
 	data.Arch = b.hostinfo.GoArch
 	data.Services = b.hostinfo.Services
-	data.Endpoints = b.endpoints
-	data.LivePeers = b.engineStatus.LivePeers
-	data.LiveDERPs = b.engineStatus.LiveDERPs
+	data.Name = b.netMap.Name
+	data.NodeKey = b.netMap.NodeKey.ShortString()
+	data.StableID = b.netMap.SelfNode.StableID
+	data.Created = b.netMap.SelfNode.Created.Format(time.Stamp)
 
 	data.ServerURL = b.serverURL
 	data.Profile.LoginName = b.activeLogin
-	// data.TX = b.engineStatus.WBytes
-	// data.RX = b.engineStatus.RBytes
-	// data.EngineStatus = b.engineStatus
-	data.NetMap = b.netMap
 
 	for _, ipp := range b.netMap.Addresses {
 		if ipp.IP().Is6() {
@@ -3420,5 +3412,5 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 	}
 	w.Write(buf.Bytes())
 
-	fmt.Fprintf(w, "netMap %+v", b.netMap.NodeKey)
+	// fmt.Fprintf(w, "SSHPolicy %+v", b)
 }

@@ -47,7 +47,16 @@
                                 <line x1="6" y1="6" x2="6.01" y2="6"></line>
                                 <line x1="6" y1="18" x2="6.01" y2="18"></line>
                             </svg>
-                            <h4 class="font-semibold truncate mr-2">{{.HostName}}</h4>
+                            <div class="truncate mr-2">
+                                <div class="">
+                                    <span class="font-semibold">{{.HostName}}</span> 
+                                    <span class="text-sm">{{.StableID}}</span><span> – </span>
+                                    <span class="text-sm">{{.NodeKey}}</span>
+                                </div>
+                                <div class="text-sm">
+                                    <span>Created </span><span>{{.Created}}</span>
+                                </div>
+                            </div>
                         </div>
                         <!-- <div class="">
                             <div>{{.IPv4}}</div>
@@ -55,6 +64,7 @@
                         </div> -->
                     </div>
                 </div>
+                
                 <div class="info py-8 text-sm">
                     <div class="status keyval">
                         <span class="key md:w-1/8">STATUS</span>
@@ -81,15 +91,6 @@
                         <span class="val md:w-1/3">{{.ServerURL}}</span>
                     </div>
 
-                    <div class="backend keyval">
-                        <span class="key md:w-1/8">Backend State</span>
-                        <span class="val md:w-1/3">{{.Backend.State}}</span>
-                    </div>
-
-                    <div class="backend keyval">
-                        <span class="key md:w-1/8">Backend Version</span>
-                        <span class="val md:w-1/3">{{.Backend.Version}}</span>
-                    </div>
 
                     <div class="os keyval">
                         <span class="key md:w-1/8">OS</span>
@@ -101,11 +102,11 @@
                         <span class="val md:w-1/3">{{.Version}}</span>
                     </div>
         
-                    <div class="peers keyval">
-                        <span class="key md:w-1/8">Peers</span> 
-                        <span class="val md:w-1/3">{{.LivePeers}}</span>
+                    <div class="dns keyval">
+                        <span class="key md:w-1/8">DNS</span> 
+                        <span class="val md:w-1/3">{{.Name}}</span>
                     </div>
-
+        
                     <div class="services keyval">
                         <span class="key md:w-1/8">Services</span> 
                         <span class="val md:w-1/3">
@@ -114,9 +115,7 @@
                                 <span class="font-semibold md:w-1/3">{{.Description}}</span>
                                 <span class="md:w-1/4">{{.Proto}} <span>{{.Port}}</span></span>
                             </div>
-                         
                             {{end}}
-
                         </span>
                     </div>
                 </div>
