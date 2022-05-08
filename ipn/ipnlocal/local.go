@@ -68,9 +68,6 @@ import (
 
 var tmpl *template.Template
 
-//go:embed local.html
-var HTML string
-
 //go:embed assets/*.css assets/*.html
 var assets embed.FS
 
