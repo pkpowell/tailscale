@@ -90,28 +90,31 @@
                         <span class="key md:w-1/8">Backend Version</span>
                         <span class="val md:w-1/3">{{.Backend.Version}}</span>
                     </div>
+
                     <div class="os keyval">
                         <span class="key md:w-1/8">OS</span>
                         <span class="val md:w-1/3">{{.OS}}</span>
                     </div>
         
-                    <div class="backend keyval">
+                    <div class="version keyval">
                         <span class="key md:w-1/8">Version</span> 
                         <span class="val md:w-1/3">{{.Version}}</span>
                     </div>
+        
+                    <div class="peers keyval">
+                        <span class="key md:w-1/8">Peers</span> 
+                        <span class="val md:w-1/3">{{.LivePeers}}</span>
+                    </div>
+
                     <div class="services keyval">
                         <span class="key md:w-1/8">Services</span> 
                         <span class="val md:w-1/3">
                             {{range .Services}}
-                            <div>
-                                {{.Description}}
+                            <div class=" flex">
+                                <span class="font-semibold md:w-1/3">{{.Description}}</span>
+                                <span class="md:w-1/4">{{.Proto}} <span>{{.Port}}</span></span>
                             </div>
-                            <div>
-                                {{.Port}}
-                            </div>
-                            <div>
-                                {{.Proto}}
-                            </div>
+                         
                             {{end}}
 
                         </span>

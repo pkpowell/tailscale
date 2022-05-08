@@ -3355,6 +3355,10 @@ type statusData struct {
 	OS           string
 	OSVersion    string
 	HostName     string
+	NetMap       *netmap.NetworkMap
+	LivePeers    map[key.NodePublic]ipnstate.PeerStatusLite
+	LiveDERPs    int
+	Endpoints    []tailcfg.Endpoint
 	Services     []tailcfg.Service
 	Health       []string
 	IPv4         string
@@ -3390,12 +3394,16 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 	data.Version = b.hostinfo.IPNVersion
 	data.Arch = b.hostinfo.GoArch
 	data.Services = b.hostinfo.Services
+	data.Endpoints = b.endpoints
+	data.LivePeers = b.engineStatus.LivePeers
+	data.LiveDERPs = b.engineStatus.LiveDERPs
 
 	data.ServerURL = b.serverURL
 	data.Profile.LoginName = b.activeLogin
 	// data.TX = b.engineStatus.WBytes
 	// data.RX = b.engineStatus.RBytes
 	// data.EngineStatus = b.engineStatus
+	data.NetMap = b.netMap
 
 	for _, ipp := range b.netMap.Addresses {
 		if ipp.IP().Is6() {
@@ -3412,5 +3420,5 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 	}
 	w.Write(buf.Bytes())
 
-	// fmt.Fprintf(w, "LivePeers %+v", b.engineStatus.LivePeers)
+	fmt.Fprintf(w, "netMap %+v", b.netMap.NodeKey)
 }
