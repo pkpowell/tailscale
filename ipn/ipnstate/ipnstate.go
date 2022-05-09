@@ -9,6 +9,7 @@ package ipnstate
 
 import (
 	"bytes"
+	"embed"
 	_ "embed"
 	"fmt"
 	"html"
@@ -386,15 +387,20 @@ type peerData struct {
 
 var tmpl *template.Template
 
-//go:embed status.html
-var webHTML string
-
-//go:embed status.css
-var webCSS string
+//go:embed assets/*.html assets/*.css
+var assets embed.FS
 
 func init() {
-	tmpl = template.Must(template.New("statusHTML").Parse(webHTML))
-	template.Must(tmpl.New("statusStyle").Parse(webCSS))
+	htmlData, err := assets.ReadFile("assets/status.html")
+	if err != nil {
+		panic(err)
+	}
+	cssData, err := assets.ReadFile("assets/status.css")
+	if err != nil {
+		panic(err)
+	}
+	tmpl = template.Must(template.New("HTML").Parse(string(htmlData)))
+	template.Must(tmpl.New("statusCSS").Parse(string(cssData)))
 }
 
 func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
@@ -406,8 +412,6 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	data.BackendState = st.BackendState
 	data.CurrentTailnet = st.CurrentTailnet
 	data.DeviceName = strings.Split(st.Self.DNSName, ".")[0]
-
-	// fmt.Printf("st.CurrentTailnet %#v", st.CurrentTailnet)
 
 	var peers []*PeerStatus
 	for _, peer := range st.Peers() {
@@ -427,7 +431,6 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		} else {
 			data.IPv6 = ip.String()
 		}
-		// data.IPs = append(data.IPs, ip.String())
 	}
 
 	for i, ps := range peers {
