@@ -905,6 +905,8 @@ func (e *userspaceEngine) Reconfig(cfg *wgcfg.Config, routerCfg *router.Config, 
 	e.magicConn.UpdatePeers(peerSet)
 	e.magicConn.SetPreferredPort(listenPort)
 
+	e.logf("** peerSet **: %+v", peerSet)
+
 	if err := e.maybeReconfigWireguardLocked(discoChanged); err != nil {
 		return err
 	}
