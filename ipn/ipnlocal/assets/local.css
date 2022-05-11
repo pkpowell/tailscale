@@ -1391,7 +1391,9 @@ html {
 }
 
 .opaque {
-	background-color: white;
+	background-color: #f7f5f4ff;
+	opacity: 1;
+	/* background-color: ; */
 	z-index: 20;
 }
 

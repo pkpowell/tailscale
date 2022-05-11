@@ -68,11 +68,11 @@ import (
 
 var tmpl *template.Template
 
-//go:embed assets/*.css assets/*.gohtml
+//go:embed assets/*.css assets/*.html
 var assets embed.FS
 
 func init() {
-	f, err := assets.ReadFile("assets/local.gohtml")
+	f, err := assets.ReadFile("assets/local.html")
 	if err != nil {
 		panic(err)
 	}
@@ -3359,6 +3359,7 @@ type statusData struct {
 	OSVersion string
 	HostName  string
 	Name      string
+	Owner     string
 
 	Services     []tailcfg.Service
 	Health       []string
@@ -3368,6 +3369,50 @@ type statusData struct {
 	EngineStatus ipn.EngineStatus
 	TX           int64
 	RX           int64
+
+	Peers []*ipnstate.PeerData
+}
+
+func setupPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
+	var ipv4 string
+	var ipv6 string
+	var connection string
+	var ago time.Duration
+
+	now := time.Now()
+	for _, ip := range ps.TailscaleIPs {
+		if ip.Is6() {
+			ipv6 = ip.String()
+		} else {
+			ipv4 = ip.String()
+		}
+	}
+
+	if !ps.LastWrite.IsZero() {
+		ago = now.Sub(ps.LastWrite)
+	}
+
+	if ps.Active {
+		if ps.Relay != "" && ps.CurAddr == "" {
+			connection = ps.Relay
+			// } else if ps.CurAddr != "" {
+			// 	data.Peers[i].Connection = html.EscapeString(ps.CurAddr)
+		}
+	}
+
+	return &ipnstate.PeerData{
+		HostName:   ps.HostName,
+		ID:         ps.ID,
+		OS:         ps.OS,
+		Created:    ps.Created,
+		DNSName:    ps.DNSName,
+		IPv4:       ipv4,
+		IPv6:       ipv6,
+		RX:         ps.RxBytes,
+		TX:         ps.TxBytes,
+		Connection: connection,
+		ActAgo:     ago.Round(time.Second).String() + " ago",
+	}
 }
 
 func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
@@ -3378,10 +3423,24 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	st := b.Status()
+
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	var data statusData
+
+	var peers []*ipnstate.PeerData
+	for _, peer := range st.Peers() {
+		ps := st.Peer[peer]
+		if ps.ShareeNode {
+			continue
+		}
+		peers = append(peers, setupPeerData(ps))
+	}
+	// ipnstate.SortPeers(peers)
+
+	data.Peers = peers
 
 	data.OS = b.hostinfo.OS
 	data.OSVersion = b.hostinfo.OSVersion
@@ -3412,5 +3471,9 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 	}
 	w.Write(buf.Bytes())
 
-	// fmt.Fprintf(w, "SSHPolicy %+v", b)
+	// for _, p := range peers {
+	// 	fmt.Fprintf(w, "peer %+v", p)
+	// }
+
+	// fmt.Fprintf(w, "status %+v", st)
 }

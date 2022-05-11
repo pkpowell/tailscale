@@ -10,7 +10,6 @@ package ipnstate
 import (
 	"bytes"
 	"embed"
-	_ "embed"
 	"fmt"
 	"html"
 	"html/template"
@@ -352,7 +351,7 @@ type StatusUpdater interface {
 }
 
 type statusData struct {
-	Peers          []peerData
+	Peers          []PeerData
 	Profile        tailcfg.UserProfile
 	DeviceName     string
 	BackendState   string
@@ -365,13 +364,14 @@ type statusData struct {
 	Now            time.Time
 }
 
-type peerData struct {
+// PeerData struct to export to template
+type PeerData struct {
 	IPs        []string
 	IPv4       string
 	IPv6       string
 	Peer       string
 	ActAgo     string
-	OverDue    bool
+	Created    time.Time
 	Active     bool
 	Online     bool
 	OS         string
@@ -422,7 +422,7 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		peers = append(peers, ps)
 	}
 	SortPeers(peers)
-	data.Peers = make([]peerData, len(peers))
+	data.Peers = make([]PeerData, len(peers))
 
 	data.IPs = make([]string, 0, len(st.TailscaleIPs))
 	for _, ip := range st.TailscaleIPs {
@@ -454,9 +454,9 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		if !ps.LastWrite.IsZero() {
 			ago := data.Now.Sub(ps.LastWrite)
 			data.Peers[i].ActAgo = ago.Round(time.Second).String() + " ago"
-			if ago < 5*time.Minute {
-				data.Peers[i].OverDue = true
-			}
+			// if ago < 5*time.Minute {
+			// 	data.Peers[i].OverDue = true
+			// }
 		}
 
 		if up, ok := st.User[ps.UserID]; ok {
