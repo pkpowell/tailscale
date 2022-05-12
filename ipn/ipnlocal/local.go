@@ -392,6 +392,7 @@ func (b *LocalBackend) Prefs() *ipn.Prefs {
 // sub-components.
 func (b *LocalBackend) Status() *ipnstate.Status {
 	sb := new(ipnstate.StatusBuilder)
+	// sb.st.Peer = make(map[key.NodePublic]*PeerStatus)
 	b.UpdateStatus(sb)
 	return sb.Status()
 }
@@ -460,6 +461,8 @@ func (b *LocalBackend) updateStatus(sb *ipnstate.StatusBuilder, extraLocked func
 		for _, pln := range b.peerAPIListeners {
 			ss.PeerAPIURL = append(ss.PeerAPIURL, pln.urlStr)
 		}
+
+		ss.HostInfo = b.netMap.Hostinfo
 	})
 	// TODO: hostinfo, and its networkinfo
 	// TODO: EngineStatus copy (and deprecate it?)
@@ -508,6 +511,7 @@ func (b *LocalBackend) populatePeerStatusLocked(sb *ipnstate.StatusBuilder) {
 			Tags:           tags,
 			PrimaryRoutes:  primaryRoutes,
 			HostName:       p.Hostinfo.Hostname(),
+			Hostinfo:       p.Hostinfo,
 			DNSName:        p.Name,
 			OS:             p.Hostinfo.OS(),
 			KeepAlive:      p.KeepAlive,
@@ -3400,8 +3404,11 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 		}
 	}
 
+	// fmt.Printf("services %+v", ps.HostInfo)
+
 	return &ipnstate.PeerData{
 		HostName:   ps.HostName,
+		HostInfo:   ps.HostInfo,
 		ID:         ps.ID,
 		OS:         ps.OS,
 		Created:    ps.Created,
@@ -3471,9 +3478,9 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 	}
 	w.Write(buf.Bytes())
 
-	// for _, p := range peers {
-	// 	fmt.Fprintf(w, "peer %+v", p)
-	// }
+	for _, p := range peers {
+		fmt.Fprintf(w, "peer %+v", p.HostInfo)
+	}
 
-	// fmt.Fprintf(w, "status %+v", st)
+	// fmt.Fprintf(w, "Hostinfo %+v", b.hostinfo)
 }
