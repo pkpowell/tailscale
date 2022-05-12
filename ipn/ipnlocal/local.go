@@ -3456,11 +3456,11 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 	data.ServerURL = b.serverURL
 	data.Profile.LoginName = b.activeLogin
 
-	for _, ipp := range b.netMap.Addresses {
-		if ipp.IP().Is6() {
-			data.IPv6 = ipp.String()
+	for _, ip := range b.netMap.SelfNode.Addresses {
+		if ip.IP().Is6() {
+			data.IPv6 = ip.IP().String()
 		} else {
-			data.IPv4 = ipp.String()
+			data.IPv4 = ip.IP().String()
 		}
 	}
 
