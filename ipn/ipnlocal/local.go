@@ -3373,7 +3373,7 @@ type statusData struct {
 	Peers []*ipnstate.PeerData
 }
 
-func setupPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
+func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	var ipv4 string
 	var ipv6 string
 	var connection string
@@ -3436,7 +3436,7 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 		if ps.ShareeNode {
 			continue
 		}
-		peers = append(peers, setupPeerData(ps))
+		peers = append(peers, getPeerData(ps))
 	}
 	// ipnstate.SortPeers(peers)
 
