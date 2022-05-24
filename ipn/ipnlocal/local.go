@@ -3479,9 +3479,9 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 	}
 	w.Write(buf.Bytes())
 
-	for _, p := range peers {
-		fmt.Fprintf(w, "peer %+v", p.HostInfo)
-	}
+	// for _, p := range peers {
+	// 	fmt.Fprintf(w, "peer %+v", p.HostInfo)
+	// }
 
 	// fmt.Fprintf(w, "Hostinfo %+v", b.hostinfo)
 }

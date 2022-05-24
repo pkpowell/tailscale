@@ -246,6 +246,7 @@ func (sb *StatusBuilder) AddTailscaleIP(ip netaddr.IP) {
 //
 // Its PeerStatus is mixed with any previous status already added.
 func (sb *StatusBuilder) AddPeer(peer key.NodePublic, st *PeerStatus) {
+
 	if st == nil {
 		panic("nil PeerStatus")
 	}
@@ -266,6 +267,8 @@ func (sb *StatusBuilder) AddPeer(peer key.NodePublic, st *PeerStatus) {
 		st.PublicKey = peer
 		return
 	}
+
+	log.Printf("adding peer %s", e.HostName)
 
 	if v := st.ID; v != "" {
 		e.ID = v
