@@ -392,8 +392,10 @@ type PeerData struct {
 	DNSName    string
 	TailAddr   []string
 	Connection string
-	TX         int64
-	RX         int64
+	TX         string
+	RX         string
+	// TX         int64
+	// RX         int64
 }
 
 var tmpl *template.Template
@@ -479,8 +481,8 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 
 		data.Peers[i].DNSName = dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
 
-		data.Peers[i].RX = ps.RxBytes
-		data.Peers[i].TX = ps.TxBytes
+		data.Peers[i].RX = ByteCount(ps.RxBytes)
+		data.Peers[i].TX = ByteCount(ps.TxBytes)
 
 		data.Peers[i].TailAddr = data.Peers[i].IPs
 
@@ -499,6 +501,20 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		fmt.Printf("an error happened %v", err)
 	}
 	w.Write(buf.Bytes())
+}
+
+func ByteCount(b int64) string {
+	const unit = 1024
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %ciB",
+		float64(b)/float64(div), "KMGTPE"[exp])
 }
 
 // PingResult contains response information for the "tailscale ping" subcommand,
