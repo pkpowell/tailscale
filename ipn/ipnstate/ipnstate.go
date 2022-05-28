@@ -374,7 +374,7 @@ type statusData struct {
 	Now            time.Time
 }
 
-// PeerData struct to export to template
+// PeerData struct to export data to html template
 type PeerData struct {
 	IPs        []string
 	IPv4       string
@@ -394,8 +394,6 @@ type PeerData struct {
 	Connection string
 	TX         string
 	RX         string
-	// TX         int64
-	// RX         int64
 }
 
 var tmpl *template.Template
@@ -454,7 +452,6 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		data.Peers[i].Online = ps.Online
 		data.Peers[i].Active = ps.Active
 		data.Peers[i].HostName = dnsname.SanitizeHostname(ps.HostName)
-		// 		dnsName := dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
 		data.Peers[i].IPs = make([]string, 0, len(ps.TailscaleIPs))
 		for _, ip := range ps.TailscaleIPs {
 			if ip.Is4() {
@@ -462,14 +459,10 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 			} else {
 				data.Peers[i].IPv6 = ip.String()
 			}
-			// data.Peers[i].IPs = append(data.Peers[i].IPs, ip.String())
 		}
 		if !ps.LastWrite.IsZero() {
 			ago := data.Now.Sub(ps.LastWrite)
 			data.Peers[i].ActAgo = ago.Round(time.Second).String() + " ago"
-			// if ago < 5*time.Minute {
-			// 	data.Peers[i].OverDue = true
-			// }
 		}
 
 		if up, ok := st.User[ps.UserID]; ok {
@@ -481,8 +474,8 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 
 		data.Peers[i].DNSName = dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
 
-		data.Peers[i].RX = HumanizeBytes(ps.RxBytes)
-		data.Peers[i].TX = HumanizeBytes(ps.TxBytes)
+		data.Peers[i].RX = FormatBytes(ps.RxBytes, Base2)
+		data.Peers[i].TX = FormatBytes(ps.TxBytes, Base2)
 
 		data.Peers[i].TailAddr = data.Peers[i].IPs
 
@@ -503,22 +496,49 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	w.Write(buf.Bytes())
 }
 
-// https://go.dev/play/p/OA48Xc4hXT9
-func HumanizeBytes(b int64) string {
-	const unit = 1024
-	if b < unit {
+// type Prefix int
+
+// const (
+//     K Prefix = iota
+//     M
+//     G
+//     T
+// 	P
+// 	E
+// )
+
+// func (d Prefix) String() string {
+//     return [...]string{"K", "M", "G", "T", "P", "E"}[d]
+// }
+
+type Unit struct {
+	factor int64
+	suffix string
+}
+
+var (
+	Base2  = Unit{factor: 1024, suffix: "iB"}
+	Base10 = Unit{factor: 1000, suffix: "B"}
+)
+
+// FormatBytes converts bytes to KB, MiB etc without loading the Math lib
+func FormatBytes(b int64, u Unit) string {
+	// bytes only
+	if b < u.factor {
 		return fmt.Sprintf("%d B", b)
 	}
 
-	div := unit
+	div := u.factor
 	exp := 0
 
-	for n := b / unit; n >= unit; n /= unit {
-		div *= unit
+	// while n >= factor; n /= factor
+	for n := b / u.factor; n >= u.factor; n /= u.factor {
+		// grow the divisor
+		div *= u.factor
 		exp++
 	}
-
-	return fmt.Sprintf("%.2f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
+	// Z and Y just for show, int64 only reaches 8 exabyes
+	return fmt.Sprintf("%.2f %c%s", float64(b)/float64(div), "KMGTPEZY"[exp], u.suffix)
 }
 
 // PingResult contains response information for the "tailscale ping" subcommand,
