@@ -503,6 +503,7 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	w.Write(buf.Bytes())
 }
 
+// https://go.dev/play/p/OA48Xc4hXT9
 func HumanizeBytes(b int64) string {
 	const unit = 1024
 	if b < unit {
