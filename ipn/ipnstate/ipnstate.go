@@ -481,8 +481,8 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 
 		data.Peers[i].DNSName = dnsname.TrimSuffix(ps.DNSName, st.MagicDNSSuffix)
 
-		data.Peers[i].RX = ByteCount(ps.RxBytes)
-		data.Peers[i].TX = ByteCount(ps.TxBytes)
+		data.Peers[i].RX = HumanizeBytes(ps.RxBytes)
+		data.Peers[i].TX = HumanizeBytes(ps.TxBytes)
 
 		data.Peers[i].TailAddr = data.Peers[i].IPs
 
@@ -503,18 +503,21 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	w.Write(buf.Bytes())
 }
 
-func ByteCount(b int64) string {
+func HumanizeBytes(b int64) string {
 	const unit = 1024
 	if b < unit {
 		return fmt.Sprintf("%d B", b)
 	}
-	div, exp := int64(unit), 0
+
+	div := unit
+	exp := 0
+
 	for n := b / unit; n >= unit; n /= unit {
 		div *= unit
 		exp++
 	}
-	return fmt.Sprintf("%.1f %ciB",
-		float64(b)/float64(div), "KMGTPE"[exp])
+
+	return fmt.Sprintf("%.2f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }
 
 // PingResult contains response information for the "tailscale ping" subcommand,

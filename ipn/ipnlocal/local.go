@@ -3378,20 +3378,6 @@ type statusData struct {
 	Peers []*ipnstate.PeerData
 }
 
-func ByteCount(b int64) string {
-	const unit = 1024
-	if b < unit {
-		return fmt.Sprintf("%d B", b)
-	}
-	div, exp := int64(unit), 0
-	for n := b / unit; n >= unit; n /= unit {
-		div *= unit
-		exp++
-	}
-	return fmt.Sprintf("%.1f %ciB",
-		float64(b)/float64(div), "KMGTPE"[exp])
-}
-
 func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	var ipv4 string
 	var ipv6 string
@@ -3430,8 +3416,8 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 		DNSName:    ps.DNSName,
 		IPv4:       ipv4,
 		IPv6:       ipv6,
-		RX:         ByteCount(ps.RxBytes),
-		TX:         ByteCount(ps.TxBytes),
+		RX:         ipnstate.HumanizeBytes(ps.RxBytes),
+		TX:         ipnstate.HumanizeBytes(ps.TxBytes),
 		Connection: connection,
 		ActAgo:     ago.Round(time.Second).String() + " ago",
 	}
