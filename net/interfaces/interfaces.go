@@ -75,7 +75,7 @@ func isProblematicInterface(nif *net.Interface) bool {
 	// DoS each other by doing traffic amplification, both of them
 	// preferring/trying to use each other for transport. See:
 	// https://github.com/tailscale/tailscale/issues/1208
-	if strings.HasPrefix(name, "zt") || (runtime.GOOS == "windows" && strings.Contains(name, "ZeroTier")) {
+	if strings.HasPrefix(name, "zt") || strings.HasPrefix(name, "feth") || (runtime.GOOS == "windows" && strings.Contains(name, "ZeroTier")) {
 		return true
 	}
 	return false
