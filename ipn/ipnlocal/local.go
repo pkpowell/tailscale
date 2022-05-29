@@ -3440,7 +3440,7 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	var ipv4 string
 	var ipv6 string
 	var connection string
-	var ago time.Duration
+	var ActAgo string
 
 	now := time.Now()
 	for _, ip := range ps.TailscaleIPs {
@@ -3452,7 +3452,9 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	}
 
 	if !ps.LastWrite.IsZero() {
-		ago = now.Sub(ps.LastWrite)
+		ActAgo = fmtAgo(now.Sub(ps.LastWrite))
+	} else {
+		ActAgo = "-"
 	}
 
 	if ps.Active {
@@ -3479,8 +3481,15 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 		RX:         ipnstate.FormatBytes(ps.RxBytes, base),
 		TX:         ipnstate.FormatBytes(ps.TxBytes, base),
 		Connection: connection,
-		ActAgo:     ago.Round(time.Second).String() + " ago",
+		ActAgo:     ActAgo,
 	}
+}
+
+func fmtAgo(a time.Duration) string {
+	if a.Seconds() < 1 {
+		return "now"
+	}
+	return a.Round(time.Second).String() + " ago"
 }
 
 func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
