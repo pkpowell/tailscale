@@ -498,22 +498,8 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 
 type Prefix struct {
 	full  string
-	short rune
-	// short []byte
+	short byte
 }
-
-// const (
-//     K Prefix = iota
-//     M
-//     G
-//     T
-// 	P
-// 	E
-// )
-
-// func (d Prefix) String() string {
-//     return [...]string{"K", "M", "G", "T", "P", "E"}[d]
-// }
 
 type Unit struct {
 	factor int64
@@ -549,6 +535,7 @@ var (
 			short: 'E',
 			full:  "exa",
 		},
+		// these are just for show. int64 only reaches 8EB
 		6: Prefix{
 			short: 'Y',
 			full:  "yotta",
@@ -570,13 +557,11 @@ func FormatBytes(b int64, u Unit) string {
 	div := u.factor
 	exp := 0
 
-	// while n >= factor; n /= factor
 	for n := b / u.factor; n >= u.factor; n /= u.factor {
 		// grow the divisor
 		div *= u.factor
 		exp++
 	}
-	// Z and Y just for show, int64 only reaches 8 exabyes
 	return fmt.Sprintf("%.2f %c%s", float64(b)/float64(div), PRX[exp].short, u.suffix)
 }
 
