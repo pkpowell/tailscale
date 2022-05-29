@@ -496,7 +496,11 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	w.Write(buf.Bytes())
 }
 
-// type Prefix int
+type Prefix struct {
+	full  string
+	short rune
+	// short []byte
+}
 
 // const (
 //     K Prefix = iota
@@ -519,9 +523,44 @@ type Unit struct {
 var (
 	Base2  = Unit{factor: 1024, suffix: "iB"}
 	Base10 = Unit{factor: 1000, suffix: "B"}
+
+	PRX = map[int]Prefix{
+		0: Prefix{
+			short: 'K',
+			full:  "kilo",
+		},
+		1: Prefix{
+			short: 'M',
+			full:  "mega",
+		},
+		2: Prefix{
+			short: 'G',
+			full:  "giga",
+		},
+		3: Prefix{
+			short: 'T',
+			full:  "tera",
+		},
+		4: Prefix{
+			short: 'P',
+			full:  "peta",
+		},
+		5: Prefix{
+			short: 'E',
+			full:  "exa",
+		},
+		6: Prefix{
+			short: 'Y',
+			full:  "yotta",
+		},
+		7: Prefix{
+			short: 'Z',
+			full:  "zetta",
+		},
+	}
 )
 
-// FormatBytes converts bytes to KB, MiB etc without loading the Math lib
+// FormatBytes converts bytes to KB, MiB etc without Math lib
 func FormatBytes(b int64, u Unit) string {
 	// bytes only
 	if b < u.factor {
@@ -538,7 +577,7 @@ func FormatBytes(b int64, u Unit) string {
 		exp++
 	}
 	// Z and Y just for show, int64 only reaches 8 exabyes
-	return fmt.Sprintf("%.2f %c%s", float64(b)/float64(div), "KMGTPEZY"[exp], u.suffix)
+	return fmt.Sprintf("%.2f %c%s", float64(b)/float64(div), PRX[exp].short, u.suffix)
 }
 
 // PingResult contains response information for the "tailscale ping" subcommand,
