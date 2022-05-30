@@ -3412,6 +3412,8 @@ func (b *LocalBackend) HandleSSHConn(c net.Conn) (err error) {
 // the equivalent tsaddr.TailscaleServiceIPv6 address).
 func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
 	mux := http.NewServeMux()
+
+	// html endpoint
 	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
 	mux.HandleFunc("/", b.handleQuad100Port80Conn)
 
@@ -3529,7 +3531,7 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 		}
 		peers = append(peers, getPeerData(ps))
 	}
-	// ipnstate.SortPeers(peers)
+	ipnstate.SortPeers(peers)
 
 	data.Peers = peers
 
