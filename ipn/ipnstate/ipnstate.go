@@ -550,6 +550,9 @@ var (
 // FormatBytes converts bytes to KB, MiB etc without Math lib
 func FormatBytes(b int64, u Unit) string {
 	// bytes only
+	if b == 0 {
+		return "-"
+	}
 	if b < u.factor {
 		return fmt.Sprintf("%d B", b)
 	}
