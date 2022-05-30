@@ -3470,7 +3470,7 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	if !ps.LastWrite.IsZero() {
 		ActAgo = fmtAgo(now.Sub(ps.LastWrite))
 	} else {
-		ActAgo = "-"
+		ActAgo = "–"
 	}
 
 	if ps.Active {

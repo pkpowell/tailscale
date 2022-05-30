@@ -551,7 +551,7 @@ var (
 func FormatBytes(b int64, u Unit) string {
 	// bytes only
 	if b == 0 {
-		return "-"
+		return "–"
 	}
 	if b < u.factor {
 		return fmt.Sprintf("%d B", b)
