@@ -3508,6 +3508,23 @@ func fmtAgo(a time.Duration) string {
 	return a.Round(time.Second).String() + " ago"
 }
 
+func SortPeers(peers []*ipnstate.PeerData) {
+	sort.Slice(peers, func(i, j int) bool {
+		return peers[i].ID < peers[j].ID
+	})
+}
+
+// func sortKey(ps *ipnstate.PeerData) string {
+// 	// if ps.DNSName != "" {
+// 	return ps.DNSName
+// 	// }
+// 	// if ps.HostName != "" {
+// 	// 	return ps.HostName
+// 	// }
+
+// 	// return string(ps.ID)
+// }
+
 func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("Content-Security-Policy", "default-src 'self';")
@@ -3531,9 +3548,11 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 		}
 		peers = append(peers, getPeerData(ps))
 	}
-	ipnstate.SortPeers(peers)
+
+	// SortPeers(peers)
 
 	data.Peers = peers
+	SortPeers(data.Peers)
 
 	data.OS = b.hostinfo.OS
 	data.OSVersion = b.hostinfo.OSVersion

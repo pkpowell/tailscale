@@ -20,8 +20,6 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/exp/constraints"
-
 	"inet.af/netaddr"
 	"tailscale.com/tailcfg"
 	"tailscale.com/types/key"
@@ -627,10 +625,8 @@ func (pr *PingResult) ToPingResponse(pingType tailcfg.PingType) *tailcfg.PingRes
 	}
 }
 
-func SortPeers[T constraints.Ordered](s []T) {
-	sort.Slice(s, func(i, j int) bool {
-		return s[i] < s[j]
-	})
+func SortPeers(peers []*PeerStatus) {
+	sort.Slice(peers, func(i, j int) bool { return sortKey(peers[i]) < sortKey(peers[j]) })
 }
 
 func sortKey(ps *PeerStatus) string {
