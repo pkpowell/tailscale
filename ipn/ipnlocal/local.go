@@ -463,7 +463,7 @@ func (b *LocalBackend) updateStatus(sb *ipnstate.StatusBuilder, extraLocked func
 			ss.PeerAPIURL = append(ss.PeerAPIURL, pln.urlStr)
 		}
 
-		ss.HostInfo = b.netMap.Hostinfo
+		// ss.HostInfo = b.netMap.Hostinfo
 	})
 	// TODO: hostinfo, and its networkinfo
 	// TODO: EngineStatus copy (and deprecate it?)
@@ -505,14 +505,14 @@ func (b *LocalBackend) populatePeerStatusLocked(sb *ipnstate.StatusBuilder) {
 			primaryRoutes = &v
 		}
 		sb.AddPeer(p.Key, &ipnstate.PeerStatus{
-			InNetworkMap:   true,
-			ID:             p.StableID,
-			UserID:         p.User,
-			TailscaleIPs:   tailscaleIPs,
-			Tags:           tags,
-			PrimaryRoutes:  primaryRoutes,
-			HostName:       p.Hostinfo.Hostname(),
-			Hostinfo:       p.Hostinfo,
+			InNetworkMap:  true,
+			ID:            p.StableID,
+			UserID:        p.User,
+			TailscaleIPs:  tailscaleIPs,
+			Tags:          tags,
+			PrimaryRoutes: primaryRoutes,
+			HostName:      p.Hostinfo.Hostname(),
+			// Hostinfo:       p.Hostinfo,
 			DNSName:        p.Name,
 			OS:             p.Hostinfo.OS(),
 			KeepAlive:      p.KeepAlive,
@@ -3486,8 +3486,8 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	// fmt.Printf("services %+v", ps.HostInfo)
 
 	return &ipnstate.PeerData{
-		HostName:   ps.HostName,
-		HostInfo:   ps.HostInfo,
+		HostName: ps.HostName,
+		// HostInfo:   ps.HostInfo,
 		ID:         ps.ID,
 		OS:         ps.OS,
 		Created:    ps.Created,
