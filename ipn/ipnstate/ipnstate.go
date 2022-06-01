@@ -168,10 +168,6 @@ type PeerStatus struct {
 	// InEngine means that this peer is tracked by the wireguard engine.
 	// In theory, all of InNetworkMap and InMagicSock and InEngine should all be true.
 	InEngine bool
-
-	// phil....
-	HostInfo tailcfg.Hostinfo
-	Hostinfo tailcfg.HostinfoView
 }
 
 type StatusBuilder struct {
@@ -351,9 +347,6 @@ func (sb *StatusBuilder) AddPeer(peer key.NodePublic, st *PeerStatus) {
 	if st.Active {
 		e.Active = true
 	}
-	// if v := &st.HostInfo; v != nil {
-	e.HostInfo = st.HostInfo
-	// }
 }
 
 type StatusUpdater interface {
