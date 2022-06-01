@@ -13,8 +13,8 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-	"syscall"
 
+	"golang.org/x/sys/unix"
 	"tailscale.com/util/lineread"
 	"tailscale.com/version/distro"
 )
@@ -68,17 +68,12 @@ func osVersionLinux() string {
 		return nil
 	})
 
-	var un syscall.Utsname
-	syscall.Uname(&un)
+	var un unix.Utsname
+	unix.Uname(&un)
 
 	var attrBuf strings.Builder
 	attrBuf.WriteString("; kernel=")
-	for _, b := range un.Release {
-		if b == 0 {
-			break
-		}
-		attrBuf.WriteByte(byte(b))
-	}
+	attrBuf.WriteString(unix.ByteSliceToString(un.Release[:]))
 	if inContainer() {
 		attrBuf.WriteString("; container")
 	}
