@@ -3483,21 +3483,23 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 
 	base := ipnstate.Base2
 
-	// fmt.Printf("services %+v", ps.HostInfo)
+	fmt.Printf("ps %+v\n\n", ps)
 
 	return &ipnstate.PeerData{
 		HostName: ps.HostName,
-		// HostInfo:   ps.HostInfo,
-		ID:         ps.ID,
-		OS:         ps.OS,
-		Created:    ps.Created,
-		DNSName:    ps.DNSName,
-		IPv4:       ipv4,
-		IPv6:       ipv6,
-		RX:         ipnstate.FormatBytes(ps.RxBytes, base),
-		TX:         ipnstate.FormatBytes(ps.TxBytes, base),
-		Connection: connection,
-		ActAgo:     ActAgo,
+		// HostInfo:   *hi,
+		ID:          ps.ID,
+		OS:          ps.OS,
+		Created:     ps.Created,
+		CreatedDate: ps.Created.Format("_2 Jan 2006"),
+		CreatedTime: ps.Created.Format("15:04"),
+		DNSName:     ps.DNSName,
+		IPv4:        ipv4,
+		IPv6:        ipv6,
+		RX:          ipnstate.FormatBytes(ps.RxBytes, base),
+		TX:          ipnstate.FormatBytes(ps.TxBytes, base),
+		Connection:  connection,
+		ActAgo:      ActAgo,
 	}
 }
 

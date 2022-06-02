@@ -132,7 +132,7 @@
                                 <th class="hidden md:block md:w-1/8">DNS</th>
                                 <th class="hidden md:block md:w-1/12 text-right">rx</th>
                                 <th class="hidden md:block md:w-1/12 text-right">tx</th>
-                                <!-- <th class="hidden md:block md:w-1/12 text-right">Online</th> -->
+                                <th class="hidden md:block md:w-1/12 text-right">Created</th>
                                 <!-- <th class="hidden md:block md:w-1/12 text-right">Active</th> -->
                                 <!-- <th class="flex justify-end ml-auto md:ml-0 w-1/6 lg:w-12"></th> -->
                             </tr>
@@ -183,7 +183,10 @@
                                 <td class="hidden md:block md:w-1/8 truncate">{{.DNSName}}</td>
                                 <td class="hidden md:block md:w-1/12 text-right">{{.RX}}</td>
                                 <td class="hidden md:block md:w-1/12 text-right">{{.TX}}</td>
-                                <!-- <td class="hidden md:block md:w-1/12 text-right">.Online</td> -->
+                                <td class="hidden md:block md:w-1/12 text-right"><span>
+                                    <div>{{.CreatedDate}}</div>
+                                    <div>{{.CreatedTime}}</div>
+                                </span></td>
                                 <!-- <td class="hidden md:block md:w-1/12 text-right">.Active</td> -->
                                 <!-- <td class="flex justify-end ml-auto md:ml-0 w-1/6 lg:w-12 justify-items-end items-center md:items-start"></td> -->
 

@@ -369,24 +369,26 @@ type statusData struct {
 
 // PeerData struct to export data to html template
 type PeerData struct {
-	IPs        []string
-	IPv4       string
-	IPv6       string
-	Peer       string
-	ActAgo     string
-	Created    time.Time
-	Active     bool
-	Online     bool
-	OS         string
-	HostName   string
-	HostInfo   tailcfg.Hostinfo
-	ID         tailcfg.StableNodeID
-	Owner      string
-	DNSName    string
-	TailAddr   []string
-	Connection string
-	TX         string
-	RX         string
+	IPs         []string
+	IPv4        string
+	IPv6        string
+	Peer        string
+	ActAgo      string
+	Created     time.Time
+	CreatedDate string
+	CreatedTime string
+	Active      bool
+	Online      bool
+	OS          string
+	HostName    string
+	HostInfo    tailcfg.Hostinfo
+	ID          tailcfg.StableNodeID
+	Owner       string
+	DNSName     string
+	TailAddr    []string
+	Connection  string
+	TX          string
+	RX          string
 }
 
 var tmpl *template.Template
