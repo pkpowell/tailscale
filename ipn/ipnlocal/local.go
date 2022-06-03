@@ -3458,7 +3458,6 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	var connection string
 	var ActAgo string
 
-	now := time.Now()
 	for _, ip := range ps.TailscaleIPs {
 		if ip.Is6() {
 			ipv6 = ip.String()
@@ -3467,6 +3466,7 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 		}
 	}
 
+	now := time.Now()
 	if !ps.LastWrite.IsZero() {
 		ActAgo = fmtAgo(now.Sub(ps.LastWrite))
 	} else {
@@ -3483,7 +3483,7 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 
 	base := ipnstate.Base2
 
-	fmt.Printf("ps %+v\n\n", ps)
+	// fmt.Printf("ps %+v\n\n", ps)
 
 	return &ipnstate.PeerData{
 		HostName: ps.HostName,

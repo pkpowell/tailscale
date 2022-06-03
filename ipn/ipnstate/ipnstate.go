@@ -506,36 +506,36 @@ var (
 	Base10 = Unit{factor: 1000, suffix: "B"}
 
 	PRX = map[int]Prefix{
-		0: Prefix{
+		0: {
 			short: 'K',
 			full:  "kilo",
 		},
-		1: Prefix{
+		1: {
 			short: 'M',
 			full:  "mega",
 		},
-		2: Prefix{
+		2: {
 			short: 'G',
 			full:  "giga",
 		},
-		3: Prefix{
+		3: {
 			short: 'T',
 			full:  "tera",
 		},
-		4: Prefix{
+		4: {
 			short: 'P',
 			full:  "peta",
 		},
-		5: Prefix{
+		5: {
 			short: 'E',
 			full:  "exa",
 		},
 		// these are just for show. int64 only reaches 8EB
-		6: Prefix{
+		6: {
 			short: 'Y',
 			full:  "yotta",
 		},
-		7: Prefix{
+		7: {
 			short: 'Z',
 			full:  "zetta",
 		},
