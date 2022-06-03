@@ -1853,7 +1853,10 @@ func (b *LocalBackend) checkPrefsLocked(p *ipn.Prefs) error {
 	if p.RunSSH {
 		switch runtime.GOOS {
 		case "linux":
-			// okay
+			if distro.Get() == distro.Synology && !envknob.UseWIPCode() {
+				return errors.New("The Tailscale SSH server does not run on Synology.")
+			}
+			// otherwise okay
 		case "darwin":
 			// okay only in tailscaled mode for now.
 			if version.IsSandboxedMacOS() {
@@ -2700,12 +2703,14 @@ func (b *LocalBackend) enterState(newState ipn.State) {
 	b.maybePauseControlClientLocked()
 	b.mu.Unlock()
 
+	// prefs may change irrespective of state; WantRunning should be explicitly
+	// set before potential early return even if the state is unchanged.
+	health.SetIPNState(newState.String(), prefs.WantRunning)
 	if oldState == newState {
 		return
 	}
 	b.logf("Switching ipn state %v -> %v (WantRunning=%v, nm=%v)",
 		oldState, newState, prefs.WantRunning, netMap != nil)
-	health.SetIPNState(newState.String(), prefs.WantRunning)
 	b.send(ipn.Notify{State: &newState})
 
 	switch newState {
