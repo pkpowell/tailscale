@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -68,7 +69,7 @@ import (
 
 var tmpl *template.Template
 
-//go:embed assets/*.css assets/*.html
+//go:embed assets/*.css assets/*.html assets/src/*.js
 var assets embed.FS
 
 func init() {
@@ -3420,6 +3421,7 @@ func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
 
 	// html endpoint
 	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
+	mux.HandleFunc("/json/", b.handleQuad100Port80JSON)
 	mux.HandleFunc("/", b.handleQuad100Port80Conn)
 
 	http.Serve(netutil.NewOneConnListener(c, nil), mux)
@@ -3532,22 +3534,11 @@ func SortPeers(peers []*ipnstate.PeerData) {
 // 	// return string(ps.ID)
 // }
 
-func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("X-Frame-Options", "DENY")
-	w.Header().Set("Content-Security-Policy", "default-src 'self';")
-	if r.Method != "GET" && r.Method != "HEAD" {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+func formatData(b *LocalBackend) (data statusData) {
+	// var data statusData
+	var st = b.Status()
 
-	st := b.Status()
-
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	var data statusData
-
-	var peers []*ipnstate.PeerData
+	peers := make([]*ipnstate.PeerData, 0)
 	for _, peer := range st.Peers() {
 		ps := st.Peer[peer]
 		if ps.ShareeNode {
@@ -3556,7 +3547,7 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 		peers = append(peers, getPeerData(ps))
 	}
 
-	// SortPeers(peers)
+	fmt.Printf("data %+v \n\n", data)
 
 	data.Peers = peers
 	SortPeers(data.Peers)
@@ -3582,6 +3573,42 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 			data.IPv4 = ip.IP().String()
 		}
 	}
+
+	return
+}
+
+func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Request) {
+	// w.Header().Set("X-Frame-Options", "DENY")
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != "GET" && r.Method != "HEAD" {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	data := formatData(b)
+
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		fmt.Printf("a json.Marshal error happened %v", err)
+		// panic(err)
+	}
+	w.Write(jsonData)
+}
+
+func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("X-Frame-Options", "DENY")
+	w.Header().Set("Content-Security-Policy", "default-src 'self';")
+	if r.Method != "GET" && r.Method != "HEAD" {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var data = formatData(b)
+
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
 	buf := new(bytes.Buffer)
 	if err := tmpl.Execute(buf, data); err != nil {
