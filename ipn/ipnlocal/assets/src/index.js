@@ -4,20 +4,49 @@ fetch('/json')
     .then(response => response.json())
     .then(data => {
         console.log(data)
-        d = data.Peers.map(x=>{
-            console.log([x.HostName, x.OS])
-            return [
-                x.HostName, 
-                x.IPv4,
-                x.OS
-            ]
-        })
-        newGrid(d)
+        // d = data.Peers.map(x=>{
+        //     console.log([x.HostName, x.OS])
+        //     return [
+        //         x.HostName, 
+        //         x.IPv4,
+        //         x.OS
+        //     ]
+        // })
+        newGrid(data.Peers)
     });
 
 newGrid = d => {
     new gridjs.Grid({
-        columns: ["Machine", "IP", "OS"],
+        columns: [
+            {
+                id: 'HostName',
+                name: 'Hostname'
+            }, 
+            {
+                id: 'IPs',
+                name: 'IPs'
+            }, 
+            {
+                id: 'OS',
+                name: 'OS'
+            },
+            {
+                id: 'ActAgo',
+                name: 'Last Seen'
+            }, 
+            {
+                id: 'DNSName',
+                name: 'DNS'
+            }, 
+            {
+                id: 'RX',
+                name: 'RX'
+            },
+            {
+                id: 'TX',
+                name: 'TX'
+            },
+        ],
         sort: true,
         data: d
         // data: [

@@ -14,6 +14,7 @@ import (
 	"html"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"sort"
 	"strings"
@@ -369,7 +370,7 @@ type statusData struct {
 
 // PeerData struct to export data to html template
 type PeerData struct {
-	IPs         []string
+	IPs         []netaddr.IP
 	IPv4        string
 	IPv6        string
 	Peer        string
@@ -385,7 +386,7 @@ type PeerData struct {
 	ID          tailcfg.StableNodeID
 	Owner       string
 	DNSName     string
-	TailAddr    []string
+	TailAddr    []net.IPAddr
 	Connection  string
 	TX          string
 	RX          string
@@ -447,7 +448,7 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		data.Peers[i].Online = ps.Online
 		data.Peers[i].Active = ps.Active
 		data.Peers[i].HostName = dnsname.SanitizeHostname(ps.HostName)
-		data.Peers[i].IPs = make([]string, 0, len(ps.TailscaleIPs))
+		data.Peers[i].IPs = ps.TailscaleIPs
 		for _, ip := range ps.TailscaleIPs {
 			if ip.Is4() {
 				data.Peers[i].IPv4 = ip.String()
@@ -472,7 +473,7 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		data.Peers[i].RX = FormatBytes(ps.RxBytes, Base2)
 		data.Peers[i].TX = FormatBytes(ps.TxBytes, Base2)
 
-		data.Peers[i].TailAddr = data.Peers[i].IPs
+		// data.Peers[i].TailAddr = data.Peers[i].IPs
 
 		if ps.Active {
 			if ps.Relay != "" && ps.CurAddr == "" {

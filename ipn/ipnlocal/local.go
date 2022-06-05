@@ -3449,6 +3449,7 @@ type statusData struct {
 
 	Services     []tailcfg.Service
 	Health       []string
+	IPs          []netaddr.IP
 	IPv4         string
 	IPv6         string
 	Now          time.Time
@@ -3501,6 +3502,7 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 		CreatedDate: ps.Created.Format("_2 Jan 2006"),
 		CreatedTime: ps.Created.Format("15:04"),
 		DNSName:     ps.DNSName,
+		IPs:         ps.TailscaleIPs,
 		IPv4:        ipv4,
 		IPv6:        ipv6,
 		RX:          ipnstate.FormatBytes(ps.RxBytes, base),
