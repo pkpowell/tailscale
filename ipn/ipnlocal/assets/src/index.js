@@ -1,3 +1,4 @@
+import { html } from "./gridjs"
 let data 
 
 fetch('/json')
@@ -5,7 +6,7 @@ fetch('/json')
     .then(data => {
         // console.log(data)
         newGrid(data.Peers)
-    });
+    })
 
 const compReg = (a, b) => {
     a = a.toLowerCase()
@@ -31,7 +32,11 @@ newGrid = d => {
             }, 
             {
                 id: 'IPs',
-                name: 'IPs'
+                name: 'IPs',
+                // formatter: cell => `${cell.join(", ")}`
+                formatter: cell => {
+                    cell.forEach(c => html(`<div>${c}</div>`))
+                }
             }, 
             {
                 id: 'OS',
@@ -55,7 +60,7 @@ newGrid = d => {
             },
         ],
         sort: true,
-        search: true,
+        // search: true,
         data: d
     }).render(document.getElementById("wrapper"));
 }
