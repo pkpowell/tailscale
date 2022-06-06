@@ -7,12 +7,27 @@ fetch('/json')
         newGrid(data.Peers)
     });
 
+const compReg = (a, b) => {
+    a = a.toLowerCase()
+    b = b.toLowerCase()
+    if (a > b) {
+        return 1;
+    } else if (b > a) {
+        return -1;
+    } else {
+        return 0;
+    }
+}
+
 newGrid = d => {
     new gridjs.Grid({
         columns: [
             {
                 id: 'HostName',
-                name: 'Hostname'
+                name: 'Hostname',
+                sort: {
+                    compare: compReg
+                }
             }, 
             {
                 id: 'IPs',
