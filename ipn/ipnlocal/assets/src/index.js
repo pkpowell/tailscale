@@ -1,12 +1,5 @@
-import { html } from "./gridjs"
+import { Grid, html } from "/assets/src/gridjs.js"
 let data 
-
-fetch('/json')
-    .then(response => response.json())
-    .then(data => {
-        // console.log(data)
-        newGrid(data.Peers)
-    })
 
 const compReg = (a, b) => {
     a = a.toLowerCase()
@@ -20,8 +13,8 @@ const compReg = (a, b) => {
     }
 }
 
-newGrid = d => {
-    new gridjs.Grid({
+const newGrid = d => {
+    new Grid({
         columns: [
             {
                 id: 'HostName',
@@ -65,4 +58,9 @@ newGrid = d => {
     }).render(document.getElementById("wrapper"));
 }
 
-// newGrid([])
+fetch('/json')
+    .then(response => response.json())
+    .then(data => {
+        // console.log(data)
+        newGrid(data.Peers)
+    })
