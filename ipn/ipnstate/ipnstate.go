@@ -375,6 +375,7 @@ type PeerData struct {
 	IPv6        string
 	Peer        string
 	ActAgo      string
+	LastSeen    string
 	Created     time.Time
 	CreatedDate string
 	CreatedTime string
@@ -384,6 +385,7 @@ type PeerData struct {
 	HostName    string
 	HostInfo    tailcfg.Hostinfo
 	ID          tailcfg.StableNodeID
+	NodeKey     key.NodePublic
 	Owner       string
 	DNSName     string
 	TailAddr    []net.IPAddr

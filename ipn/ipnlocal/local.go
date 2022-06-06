@@ -3491,12 +3491,10 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 
 	base := ipnstate.Base2
 
-	// fmt.Printf("ps %+v\n\n", ps)
-
 	return &ipnstate.PeerData{
-		HostName: ps.HostName,
-		// HostInfo:   *hi,
+		HostName:    ps.HostName,
 		ID:          ps.ID,
+		NodeKey:     ps.PublicKey,
 		OS:          ps.OS,
 		Created:     ps.Created,
 		CreatedDate: ps.Created.Format("_2 Jan 2006"),
@@ -3509,6 +3507,7 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 		TX:          ipnstate.FormatBytes(ps.TxBytes, base),
 		Connection:  connection,
 		ActAgo:      ActAgo,
+		LastSeen:    ps.LastSeen.Format(time.RFC3339),
 	}
 }
 
@@ -3525,19 +3524,7 @@ func SortPeers(peers []*ipnstate.PeerData) {
 	})
 }
 
-// func sortKey(ps *ipnstate.PeerData) string {
-// 	// if ps.DNSName != "" {
-// 	return ps.DNSName
-// 	// }
-// 	// if ps.HostName != "" {
-// 	// 	return ps.HostName
-// 	// }
-
-// 	// return string(ps.ID)
-// }
-
 func formatData(b *LocalBackend) (data statusData) {
-	// var data statusData
 	var st = b.Status()
 
 	peers := make([]*ipnstate.PeerData, 0)
@@ -3549,7 +3536,7 @@ func formatData(b *LocalBackend) (data statusData) {
 		peers = append(peers, getPeerData(ps))
 	}
 
-	fmt.Printf("data %+v \n\n", data)
+	// fmt.Printf("data %+v \n\n", data)
 
 	data.Peers = peers
 	SortPeers(data.Peers)
@@ -3618,10 +3605,4 @@ func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Re
 		fmt.Printf("an error happened %v", err)
 	}
 	w.Write(buf.Bytes())
-
-	// for _, p := range peers {
-	// 	fmt.Fprintf(w, "peer %+v", p.HostInfo)
-	// }
-
-	// fmt.Fprintf(w, "Hostinfo %+v", b.hostinfo)
 }

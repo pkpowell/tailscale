@@ -14,6 +14,7 @@ const compReg = (a, b) => {
 }
 
 const newGrid = d => {
+    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }
     new Grid({
         columns: [
             {
@@ -27,17 +28,16 @@ const newGrid = d => {
                 id: 'IPs',
                 name: 'IPs',
                 // formatter: cell => `${cell.join(", ")}`
-                formatter: cell => {
-                    cell.forEach(c => html(`<div>${c}</div>`))
-                }
+                formatter: html(cell => cell.forEach(c => `<div>${c}</div>`))
             }, 
             {
                 id: 'OS',
                 name: 'OS'
             },
             {
-                id: 'ActAgo',
-                name: 'Last Seen'
+                id: 'LastSeen',
+                name: 'Last Seen',
+                formatter: cell => new Date(cell).toLocaleDateString("en-US", options)
             }, 
             {
                 id: 'DNSName',
@@ -61,6 +61,6 @@ const newGrid = d => {
 fetch('/json')
     .then(response => response.json())
     .then(data => {
-        // console.log(data)
+        console.log(data)
         newGrid(data.Peers)
     })
