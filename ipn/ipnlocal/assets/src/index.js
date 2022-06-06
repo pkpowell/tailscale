@@ -1,5 +1,24 @@
+import { h, render, Component } from '/assets/node_modules/preact/dist/preact.module.js'
 import { Grid, html } from "/assets/src/gridjs.js"
 let data 
+
+class App extends Component {
+    // Initialise our state. For now we only store the input value
+    state = { value: '' }
+  
+    onInput = ev => {
+        // This will schedule a state update. Once updated the component
+        // will automatically re-render itself.
+        this.setState({ value: ev.target.value });
+    }
+  
+    render() {
+        return h('h1', null, 'Hello World')
+    }
+}
+  
+render(App , document.body)
+  
 
 const compReg = (a, b) => {
     a = a.toLowerCase()

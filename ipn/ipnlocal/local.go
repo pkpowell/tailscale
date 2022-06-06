@@ -69,7 +69,7 @@ import (
 
 var tmpl *template.Template
 
-//go:embed assets/*.css assets/*.html assets/src/*.js
+//go:embed assets/*.css assets/*.html assets/src/*.js assets/node_modules/preact/dist/preact.module.js
 var assets embed.FS
 
 func init() {
