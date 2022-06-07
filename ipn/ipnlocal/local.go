@@ -5,14 +5,13 @@
 package ipnlocal
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -67,17 +66,18 @@ import (
 	"tailscale.com/wgengine/wgcfg/nmcfg"
 )
 
-var tmpl *template.Template
-
-//go:embed assets/*.css assets/*.html assets/src/*.js assets/node_modules/preact/dist/preact.module.js assets/node_modules/timeago.js/dist/timeago.min.js
+//go:embed assets/html-sv/dist
 var assets embed.FS
 
+var assetsNormalized fs.FS
+
 func init() {
-	f, err := assets.ReadFile("assets/local.html")
+	var err error
+	assetsNormalized, err = fs.Sub(assets, "assets/html-sv/dist")
 	if err != nil {
 		panic(err)
 	}
-	tmpl = template.Must(template.New("HTML").Parse(string(f)))
+
 }
 
 var controlDebugFlags = getControlDebugFlags()
@@ -3420,9 +3420,9 @@ func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
 	mux := http.NewServeMux()
 
 	// html endpoint
-	mux.Handle("/assets/", http.FileServer(http.FS(assets)))
+	mux.Handle("/", http.FileServer(http.FS(assetsNormalized)))
+	// json api
 	mux.HandleFunc("/json/", b.handleQuad100Port80JSON)
-	mux.HandleFunc("/", b.handleQuad100Port80Conn)
 
 	http.Serve(netutil.NewOneConnListener(c, nil), mux)
 }
@@ -3550,7 +3550,7 @@ func formatData(b *LocalBackend) (data statusData) {
 	data.Name = b.netMap.Name
 	data.NodeKey = b.netMap.NodeKey.ShortString()
 	data.StableID = b.netMap.SelfNode.StableID
-	data.Created = b.netMap.SelfNode.Created.Format(time.Stamp)
+	data.Created = b.netMap.SelfNode.Created.Format(time.RFC3339)
 
 	data.ServerURL = b.serverURL
 	data.Profile.LoginName = b.activeLogin
@@ -3578,6 +3578,7 @@ func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Re
 	default:
 		fmt.Printf("default host %s\n\n", host)
 	}
+
 	if r.Method != "GET" && r.Method != "HEAD" {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -3595,23 +3596,23 @@ func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Re
 	w.Write(jsonData)
 }
 
-func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("X-Frame-Options", "DENY")
-	w.Header().Set("Content-Security-Policy", "default-src 'self';")
-	if r.Method != "GET" && r.Method != "HEAD" {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+// func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
+// 	w.Header().Set("X-Frame-Options", "DENY")
+// 	w.Header().Set("Content-Security-Policy", "default-src 'self';")
+// 	if r.Method != "GET" && r.Method != "HEAD" {
+// 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
 
-	var data = formatData(b)
+// 	var data = formatData(b)
 
-	b.mu.Lock()
-	defer b.mu.Unlock()
+// 	b.mu.Lock()
+// 	defer b.mu.Unlock()
 
-	buf := new(bytes.Buffer)
-	if err := tmpl.Execute(buf, data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		fmt.Printf("an error happened %v", err)
-	}
-	w.Write(buf.Bytes())
-}
+// 	buf := new(bytes.Buffer)
+// 	if err := tmpl.Execute(buf, data); err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		fmt.Printf("an error happened %v", err)
+// 	}
+// 	w.Write(buf.Bytes())
+// }

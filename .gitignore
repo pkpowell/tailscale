@@ -18,6 +18,8 @@ speedtest
 cmd/tailscale/tailscale
 cmd/tailscaled/tailscaled
 
+node_modules/
+
 # Test binary, built with `go test -c`
 *.test
 

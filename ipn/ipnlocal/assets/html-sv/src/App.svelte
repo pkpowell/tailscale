@@ -1,55 +1,23 @@
 <script>
-  import logo from './assets/logo.svg'
-  import NodeInfo from './lib/Nodeinfo.svelte'
+  import NodeInfo from "./lib/Nodeinfo.svelte"
+  import Peers from "./lib/Peers.svelte"
 </script>
 
-<main>
-  <img src={logo} alt="Svelte Logo" />
-  <NodeInfo />
-
-  
-</main>
+<!-- <main> -->
+  <header class="flex bg-gray-100 items-center py-2 mb-8">
+    <NodeInfo />
+    <!-- <Peers /> -->
+  </header>
+<!-- </main> -->
 
 <style>
-    :root {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    }
+  @import "../../local.css";
 
-    main {
-      text-align: center;
-      padding: 1em;
-      margin: 0 auto;
-    }
+  :root {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-    img {
-      height: 16rem;
-      width: 16rem;
-    }
-
-    h1 {
-      color: #ff3e00;
-      text-transform: uppercase;
-      font-size: 4rem;
-      font-weight: 100;
-      line-height: 1.1;
-      margin: 2rem auto;
-      max-width: 14rem;
-    }
-
-    /* p {
-      max-width: 14rem;
-      margin: 1rem auto;
-      line-height: 1.35;
-    } */
-
-    @media (min-width: 480px) {
-      h1 {
-        max-width: none;
-      }
-
-      /* p {
-        max-width: none;
-      } */
-    }
 </style>
