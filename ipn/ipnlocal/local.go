@@ -69,7 +69,7 @@ import (
 
 var tmpl *template.Template
 
-//go:embed assets/*.css assets/*.html assets/src/*.js assets/node_modules/preact/dist/preact.module.js
+//go:embed assets/*.css assets/*.html assets/src/*.js assets/node_modules/preact/dist/preact.module.js assets/node_modules/timeago.js/dist/timeago.min.js
 var assets embed.FS
 
 func init() {
@@ -3567,8 +3567,17 @@ func formatData(b *LocalBackend) (data statusData) {
 }
 
 func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Request) {
-	// w.Header().Set("X-Frame-Options", "DENY")
+	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("Content-Type", "application/json")
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
+	host := r.Header.Get("Origin")
+	switch host {
+	case "http://localhost:3000", "http://100.100.100.100":
+		fmt.Printf("case host %s\n\n", host)
+		w.Header().Set("Access-Control-Allow-Origin", host)
+	default:
+		fmt.Printf("default host %s\n\n", host)
+	}
 	if r.Method != "GET" && r.Method != "HEAD" {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -3587,8 +3596,8 @@ func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Re
 }
 
 func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
-	// w.Header().Set("X-Frame-Options", "DENY")
-	// w.Header().Set("Content-Security-Policy", "default-src 'self';")
+	w.Header().Set("X-Frame-Options", "DENY")
+	w.Header().Set("Content-Security-Policy", "default-src 'self';")
 	if r.Method != "GET" && r.Method != "HEAD" {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
