@@ -5,8 +5,8 @@
         <thead class="stick opaque">
             <tr class="w-full px-0.5 hover:bg-gray-0">
                 <th on:click={sort("HostName")} class="md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
-                <th on:click={sort("OS")} class="hidden md:block md:w-1/8">IP</th>
-                <th class="hidden md:block md:w-1/12">OS</th>
+                <th on:click={sort("IPv4")} class="hidden md:block md:w-1/8">IP</th>
+                <th on:click={sort("OS")} class="hidden md:block md:w-1/12">OS</th>
                 <th class="hidden md:block md:w-1/12">Last Seen</th>
                 <th class="hidden md:block md:w-1/12">Relay</th>
                 <th on:click={sort("DNSName")} class="hidden md:block md:w-1/8">DNS</th>
@@ -89,7 +89,6 @@
     }
 
     $: sort = column => {
-		
 		if (sortBy.col == column) {
 			sortBy.ascending = !sortBy.ascending
 		} else {
@@ -107,8 +106,8 @@
             ? 1 * sortModifier 
             : 0;
         }
-        console.log("sorter", sorter)
 		
 		data = data.sort(sorter)
+        console.log("data", data)
 	}
 </script>
