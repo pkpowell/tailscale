@@ -3,12 +3,9 @@
   import Peers from "./lib/Peers.svelte"
 </script>
 
-<!-- <main> -->
   <header class="flex bg-gray-100 items-center py-2 mb-8">
     <NodeInfo />
-    <!-- <Peers /> -->
   </header>
-<!-- </main> -->
 
 <style>
   @import "../../local.css";
