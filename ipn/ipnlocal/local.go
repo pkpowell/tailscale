@@ -3498,8 +3498,6 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	if ps.Active {
 		if ps.Relay != "" && ps.CurAddr == "" {
 			connection = ps.Relay
-			// } else if ps.CurAddr != "" {
-			// 	data.Peers[i].Connection = html.EscapeString(ps.CurAddr)
 		}
 	}
 
@@ -3519,6 +3517,8 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 		IPv6:        ipv6,
 		RX:          ipnstate.FormatBytes(ps.RxBytes, base),
 		TX:          ipnstate.FormatBytes(ps.TxBytes, base),
+		RXb:         ps.RxBytes,
+		TXb:         ps.TxBytes,
 		Connection:  connection,
 		ActAgo:      ActAgo,
 		LastSeen:    ps.LastSeen.Format(time.RFC3339),
@@ -3586,7 +3586,7 @@ func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Re
 	// w.Header().Set("Access-Control-Allow-Origin", "*")
 	host := r.Header.Get("Origin")
 	switch host {
-	case "http://localhost:3000", "http://100.100.100.100":
+	case "http://localhost:3000", "http://0.0.0.0:5678", "http://100.100.100.100":
 		fmt.Printf("case host %s\n\n", host)
 		w.Header().Set("Access-Control-Allow-Origin", host)
 	default:

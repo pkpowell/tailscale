@@ -8,7 +8,7 @@
                 <th on:click={sort("HostName")} class="md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
                 <th on:click={sort("IPv4")} class="hidden md:block md:w-1/8">IP</th>
                 <th on:click={sort("OS")} class="hidden md:block md:w-1/12">OS</th>
-                <th class="hidden md:block md:w-1/12">Last Seen</th>
+                <th on:click={sort("LastSeen")} class="hidden md:block md:w-1/12">Last Seen</th>
                 <th class="hidden md:block md:w-1/12">Relay</th>
                 <th on:click={sort("DNSName")} class="hidden md:block md:w-1/8">DNS</th>
                 <th on:click={sort("RX")} class="hidden md:block md:w-1/12 text-right">rx</th>
@@ -59,7 +59,7 @@
                     </ul>
                 </td>
                 <td class="hidden md:block md:w-1/12 ">{p.OS}</td>
-                <td class="hidden md:block md:w-1/12">{new Date(p.LastSeen).toLocaleDateString("en-US", options)}</td>
+                <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", options)}">{ago(p.LastSeen)}</td>
                 <td class="hidden md:block md:w-1/12">{p.Connection}</td>
                 <td class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td>
                 <td class="hidden md:block md:w-1/12 text-right">{p.RX}</td>
@@ -80,6 +80,12 @@
 
 <script>
     import { onMount } from "svelte"
+    import dayjs from 'dayjs'
+    import relativeTime from 'dayjs/plugin/relativeTime'
+    dayjs.extend(relativeTime)
+
+    import { FormatBytes } from "../js/lib";
+
     export let data = []
 
     const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }
@@ -89,7 +95,14 @@
         asc: true
     }
 
-    $: sort = (column) => {
+    const ago = t => {
+        return dayjs(t).fromNow()
+    }
+    const bytes = b => {
+        return FormatBytes(t)
+    }
+
+    $: sort = column => {
 		
 		if (sortBy.col == column) {
 			sortBy.asc = !sortBy.asc

@@ -408,6 +408,8 @@ type PeerData struct {
 	Connection  string
 	TX          string
 	RX          string
+	TXb         int64
+	RXb         int64
 }
 
 var tmpl *template.Template
