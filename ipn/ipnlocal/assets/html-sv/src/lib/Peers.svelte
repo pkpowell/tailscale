@@ -17,7 +17,7 @@
         </thead>
 
         <tbody class="table-body">
-            {#each sorted() as p}
+            {#each orderedPeers(sortBy) as p}
             <tr class="table-row w-full px-0.5 hover:bg-gray-0">
                 <td class="md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">
                     <div class="relative">
@@ -97,6 +97,27 @@
     const sorted=()=>{
         return data.sort(compare)
     }
+
+    // let param = 'HostName'
+	// let order = 'asc'
+
+    $: orderedPeers = (s) => {
+		let d = data.sort((a, b) => {
+            let res
+            let x = a[s.col].toLowerCase()
+            let y = b[s.col].toLowerCase()
+			if (s.ascending) {
+                res = x < y
+                console.log("asc res", res)
+                return res
+            } 
+            res = y > x
+            console.log("desc res", res)
+			return res
+		})
+        console.log("data",d)
+        return d
+	}
 
     $: sort = column => {
 		if (sortBy.col == column) {
