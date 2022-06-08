@@ -17,7 +17,7 @@
         </thead>
 
         <tbody class="table-body">
-            {#each orderedPeers(sortBy) as p}
+            {#each peers as p}
             <tr class="table-row w-full px-0.5 hover:bg-gray-0">
                 <td class="md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">
                     <div class="relative">
@@ -79,14 +79,17 @@
 <script>
     import { onMount } from "svelte"
     export let data = []
-    let sortBy = {
+    $: peers = orderPeers({
         col: "HostName", 
         ascending: true
+    })
+
+    let sortBy = {
+        col: "HostName", 
+        asc: true
     }
 
-    onMount(async () => {
 
-    })
 
     let compare=(a, b) => {
         console.log("a",a.HostName)
@@ -94,19 +97,14 @@
         return a.HostName < b.HostName
     }
 
-    const sorted=()=>{
-        return data.sort(compare)
-    }
 
-    // let param = 'HostName'
-	// let order = 'asc'
-
-    $: orderedPeers = (s) => {
-		let d = data.sort((a, b) => {
+    const orderPeers = (s) => {
+        console.log("ordering peers",peers)
+		return data.sort((a, b) => {
             let res
             let x = a[s.col].toLowerCase()
             let y = b[s.col].toLowerCase()
-			if (s.ascending) {
+			if (s.asc) {
                 res = x < y
                 console.log("asc res", res)
                 return res
@@ -115,18 +113,17 @@
             console.log("desc res", res)
 			return res
 		})
-        console.log("data",d)
-        return d
 	}
 
     $: sort = column => {
 		if (sortBy.col == column) {
-			sortBy.ascending = !sortBy.ascending
+			sortBy.asc = !sortBy.asc
 		} else {
 			sortBy.col = column
-			sortBy.ascending = true
+			sortBy.asc = true
 		}
         console.log("sorting %v...", sortBy )
+        // orderPeers(sortBy)
     }
 
     // $: sort = column => {
@@ -153,4 +150,7 @@
     //     console.log("data", data)
     //     // return data.sort(sorter)
 	// }
+    orderPeers(sortBy)
+    // onMount(async () => {
+    // })
 </script>
