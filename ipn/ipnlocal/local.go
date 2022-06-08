@@ -3532,11 +3532,11 @@ func fmtAgo(a time.Duration) string {
 	return a.Round(time.Second).String() + " ago"
 }
 
-func SortPeers(peers []*ipnstate.PeerData) {
-	sort.Slice(peers, func(i, j int) bool {
-		return peers[i].ID < peers[j].ID
-	})
-}
+// func SortPeers(peers []*ipnstate.PeerData) {
+// 	sort.Slice(peers, func(i, j int) bool {
+// 		return peers[i].HostName < peers[j].HostName
+// 	})
+// }
 
 func formatData(b *LocalBackend) (data statusData) {
 	var st = b.Status()
@@ -3553,7 +3553,7 @@ func formatData(b *LocalBackend) (data statusData) {
 	// fmt.Printf("data %+v \n\n", data)
 
 	data.Peers = peers
-	SortPeers(data.Peers)
+	// SortPeers(data.Peers)
 
 	data.OS = b.hostinfo.OS
 	data.OSVersion = b.hostinfo.OSVersion

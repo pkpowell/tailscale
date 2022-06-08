@@ -4,6 +4,7 @@
     <table class="tb">
         <thead class="stick opaque">
             <tr class="w-full px-0.5 hover:bg-gray-0">
+                <th on:click={sort("ID")} class="w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
                 <th on:click={sort("HostName")} class="md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
                 <th on:click={sort("IPv4")} class="hidden md:block md:w-1/8">IP</th>
                 <th on:click={sort("OS")} class="hidden md:block md:w-1/12">OS</th>
@@ -17,23 +18,24 @@
         </thead>
 
         <tbody class="table-body">
-            {#each peers as p}
+            {#each data as p}
             <tr class="table-row w-full px-0.5 hover:bg-gray-0">
+                <td class="w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">
+                    <div class="relative">
+                        <div class="flex items-center text-gray-600 text-sm">
+                            <span>
+                                {p.ID}
+                            </span>
+                        </div>
+                    </div>
+                    
+                </td>
                 <td class="md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">
                     <div class="relative">
                         <div class="items-center text-gray-900">
                             <h3 class="font-semibold hover:text-blue-500">
                                 {p.HostName}
                             </h3>
-                        </div>
-                        <div class="flex items-center text-gray-600 text-sm">
-                            <span>
-                            </span>
-                        </div>
-                        <div class="flex items-center text-gray-600 text-sm">
-                            <span>
-                                {p.ID}
-                            </span>
                         </div>
                     </div>
                     
@@ -57,7 +59,7 @@
                     </ul>
                 </td>
                 <td class="hidden md:block md:w-1/12 ">{p.OS}</td>
-                <td class="hidden md:block md:w-1/12">{p.ActAgo}</td>
+                <td class="hidden md:block md:w-1/12">{new Date(p.LastSeen).toLocaleDateString("en-US", options)}</td>
                 <td class="hidden md:block md:w-1/12">{p.Connection}</td>
                 <td class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td>
                 <td class="hidden md:block md:w-1/12 text-right">{p.RX}</td>
@@ -79,78 +81,39 @@
 <script>
     import { onMount } from "svelte"
     export let data = []
-    $: peers = orderPeers({
-        col: "HostName", 
-        ascending: true
-    })
+
+    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }
 
     let sortBy = {
         col: "HostName", 
         asc: true
     }
 
-
-
-    let compare=(a, b) => {
-        console.log("a",a.HostName)
-        console.log("b",b.HostName)
-        return a.HostName < b.HostName
-    }
-
-
-    const orderPeers = (s) => {
-        console.log("ordering peers",peers)
-		return data.sort((a, b) => {
-            let res
-            let x = a[s.col].toLowerCase()
-            let y = b[s.col].toLowerCase()
-			if (s.asc) {
-                res = x < y
-                console.log("asc res", res)
-                return res
-            } 
-            res = y > x
-            console.log("desc res", res)
-			return res
-		})
-	}
-
-    $: sort = column => {
+    $: sort = (column) => {
+		
 		if (sortBy.col == column) {
 			sortBy.asc = !sortBy.asc
 		} else {
 			sortBy.col = column
 			sortBy.asc = true
 		}
-        console.log("sorting %v...", sortBy )
-        // orderPeers(sortBy)
-    }
+		
+		let sortModifier = (sortBy.asc) ? 1 : -1;
+		
+		let sorter = (a, b) => {
+            let x = a[column].toLowerCase()
+            let y = b[column].toLowerCase()
+			return (x < y) 
+			? -1 * sortModifier 
+			: (x > y) 
+			? 1 * sortModifier 
+			: 0;
+        }
+		
+		data = data.sort(sorter);
+	}
 
-    // $: sort = column => {
-    //     console.log("sorting %s...", column)
-	// 	if (sortBy.col == column) {
-	// 		sortBy.ascending = !sortBy.ascending
-	// 	} else {
-	// 		sortBy.col = column
-	// 		sortBy.ascending = true
-	// 	}
-		
-	// 	// Modifier to sorting function for ascending or descending
-	// 	let sortModifier = (sortBy.ascending) ? 1 : -1;
-		
-    //     let sorter = (x, y) => {
-    //         (x[column].toLowerCase() < y[column].toLowerCase()) 
-    //         ? -1 * sortModifier 
-    //         : (x[column].toLowerCase() > y[column].toLowerCase()) 
-    //         ? 1 * sortModifier 
-    //         : 0;
-    //     }
-		
-	// 	data = data.sort(sorter)
-    //     console.log("data", data)
-    //     // return data.sort(sorter)
-	// }
-    orderPeers(sortBy)
-    // onMount(async () => {
-    // })
+    onMount(async () => {
+        sort("ID")
+    })
 </script>

@@ -1,5 +1,12 @@
-<svg width="26" height="26" viewBox="0 0 23 23" title="Tailscale" fill="none" xmlns="http://www.w3.org/2000/svg"
-    class="flex-shrink-0 mr-4">
+    <!-- width="26" 
+    height="26"  -->
+<svg 
+    viewBox="0 0 23 23" 
+    title="Tailscale" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    class="flex-shrink-0 mr-4"
+>
     <circle opacity="0.2" cx="3.4" cy="3.25" r="2.7" fill="currentColor"></circle>
     <circle cx="3.4" cy="11.3" r="2.7" fill="currentColor"></circle>
     <circle opacity="0.2" cx="3.4" cy="19.5" r="2.7" fill="currentColor"></circle>

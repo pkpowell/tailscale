@@ -1,7 +1,8 @@
 
     <div class="width-80">
         <div class="flex py-8">
-            <img src={logo} alt="Svelte Logo" />
+
+            <img src={logo} alt="Svelte Logo" class="w-8 pr-3"/>
 
             <div class="flex items-center space-x-2 ">
                 <div class="text-right truncate leading-4">
@@ -14,7 +15,9 @@
         <div class="flex ">
             <div class="border border-gray-200 bg-gray-0 rounded-lg flex items-center justify-between">
                 <div class="flex items-center min-width-0">
-                    <img src={device} alt="Svelte Logo" />
+
+                    <img src={device} alt="Svelte Logo" class="w-8 pr-3"/>
+
                     <div class="truncate mr-2">
                         <div class="">
                             <span class="font-semibold">{data.HostName}</span> 
