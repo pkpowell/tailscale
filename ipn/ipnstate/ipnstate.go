@@ -386,30 +386,31 @@ type statusData struct {
 
 // PeerData struct to export data to html template
 type PeerData struct {
-	IPs         []netaddr.IP
-	IPv4        string
-	IPv6        string
-	Peer        string
-	ActAgo      string
-	LastSeen    string
-	Created     time.Time
-	CreatedDate string
-	CreatedTime string
-	Active      bool
-	Online      bool
-	OS          string
-	HostName    string
-	HostInfo    tailcfg.Hostinfo
-	ID          tailcfg.StableNodeID
-	NodeKey     key.NodePublic
-	Owner       string
-	DNSName     string
-	TailAddr    []net.IPAddr
-	Connection  string
-	TX          string
-	RX          string
-	TXb         int64
-	RXb         int64
+	IPs         []netaddr.IP         `json:"IPs"`
+	IPv4        string               `json:"IPv4"`
+	IPv6        string               `json:"IPv6"`
+	Peer        string               `json:"Peer"`
+	ActAgo      string               `json:"ActAgo"`
+	LastSeen    string               `json:"LastSeen"`
+	Unseen      bool                 `json:"Unseen"`
+	Created     time.Time            `json:"Created"`
+	CreatedDate string               `json:"CreatedDate"`
+	CreatedTime string               `json:"CreatedTime"`
+	Active      bool                 `json:"Active"`
+	Online      bool                 `json:"Online"`
+	OS          string               `json:"OS"`
+	HostName    string               `json:"HostName"`
+	HostInfo    tailcfg.Hostinfo     `json:"HostInfo"`
+	ID          tailcfg.StableNodeID `json:"ID"`
+	NodeKey     key.NodePublic       `json:"NodeKey"`
+	Owner       string               `json:"Owner"`
+	DNSName     string               `json:"DNSName"`
+	TailAddr    []net.IPAddr         `json:"TailAddr"`
+	Connection  string               `json:"Connection"`
+	TX          string               `json:"TX"`
+	RX          string               `json:"RX"`
+	TXb         int64                `json:"TXb"`
+	RXb         int64                `json:"RXb"`
 }
 
 var tmpl *template.Template

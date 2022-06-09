@@ -44,24 +44,35 @@ const PRX = {
 
 // FormatBytes converts bytes to KB, MiB etc without Math lib
 const FormatBytes = (b, u) => {
-	// bytes only
-	if (b === 0) {
-		return "–"
-	}
+    if (typeof b !== "undefined") {
+        if (typeof u === "undefined") {
+            u = Base10
+        }
+        b = parseInt(b)
+        // bytes only
+        if (b === 0) {
+            return "–"
+        }
 
-	if (b < u.factor) {
-		return b + "B"
-	}
+        if (b < u.factor) {
+            return b + "B"
+        }
 
-	let div = u.factor
-	let exp = 0
+        let div = u.factor
+        let exp = 0
 
-	for (let n = b / u.factor; n >= u.factor; n /= u.factor) {
-		// grow the divisor
-		div *= u.factor
-		exp++
-	}
-	return (b / div).toFixed(2), PRX[exp].short, u.suffix
+        for (let n = b / u.factor; n >= u.factor; n /= u.factor) {
+            // grow the divisor
+            div *= u.factor
+            exp++
+        }
+        let f = (b / div).toFixed(2) + PRX[exp].short + u.suffix
+        console.log("formatted bytes", f)
+
+        return f
+    } else {
+        return "–"
+    }
 }
 
 export  {

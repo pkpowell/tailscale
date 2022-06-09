@@ -59,11 +59,11 @@
                     </ul>
                 </td>
                 <td class="hidden md:block md:w-1/12 ">{p.OS}</td>
-                <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", options)}">{ago(p.LastSeen)}</td>
+                <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", options)}">{ago(p.LastSeen, p.Unseen)}</td>
                 <td class="hidden md:block md:w-1/12">{p.Connection}</td>
                 <td class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td>
-                <td class="hidden md:block md:w-1/12 text-right">{p.RX}</td>
-                <td class="hidden md:block md:w-1/12 text-right">{p.TX}</td>
+                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RXb)}</td>
+                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TXb)}</td>
                 <td class="hidden md:block md:w-1/12 text-right"><span>
                     <div>{p.CreatedDate}</div>
                     <div>{p.CreatedTime}</div>
@@ -95,11 +95,12 @@
         asc: true
     }
 
-    const ago = t => {
-        return dayjs(t).fromNow()
+    const ago = (t, u) => {
+        if (!u) return dayjs(t).fromNow()
+        return "–"
     }
     const bytes = b => {
-        return FormatBytes(t)
+        return FormatBytes(b)
     }
 
     $: sort = column => {

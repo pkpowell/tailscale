@@ -3491,6 +3491,7 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	now := time.Now()
 	if !ps.LastWrite.IsZero() {
 		ActAgo = fmtAgo(now.Sub(ps.LastWrite))
+
 	} else {
 		ActAgo = "–"
 	}
@@ -3522,6 +3523,7 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 		Connection:  connection,
 		ActAgo:      ActAgo,
 		LastSeen:    ps.LastSeen.Format(time.RFC3339),
+		Unseen:      ps.LastWrite.IsZero(),
 	}
 }
 
