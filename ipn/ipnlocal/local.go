@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -112,6 +113,24 @@ func RegisterNewSSHServer(fn newSSHServerFunc) {
 	newSSHServer = fn
 }
 
+// Example SSE server in Golang.
+//     $ go run sse.go
+
+type Broker struct {
+
+	// Events are pushed to this channel by the main events-gathering routine
+	Notifier chan []byte
+
+	// New client connections
+	newClients chan chan []byte
+
+	// Closed client connections
+	closingClients chan chan []byte
+
+	// Client connections registry
+	clients map[chan []byte]bool
+}
+
 // LocalBackend is the glue between the major pieces of the Tailscale
 // network software: the cloud control plane (via controlclient), the
 // network data plane (via wgengine), and the user-facing UIs and CLIs
@@ -146,6 +165,8 @@ type LocalBackend struct {
 
 	filterAtomic            atomic.Value // of *filter.Filter
 	containsViaIPFuncAtomic atomic.Value // of func(netaddr.IP) bool
+
+	broker Broker // sse
 
 	// The mutex protects the following elements.
 	mu             sync.Mutex
@@ -3437,6 +3458,7 @@ func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
 	mux.Handle("/", http.FileServer(http.FS(assetsNormalized)))
 	// json api
 	mux.HandleFunc("/json/", b.handleQuad100Port80JSON)
+	mux.HandleFunc("/sse/", b.handleQuad100Port80SSE)
 
 	http.Serve(netutil.NewOneConnListener(c, nil), mux)
 }
@@ -3580,6 +3602,93 @@ func formatData(b *LocalBackend) (data statusData) {
 	}
 
 	return
+}
+
+func (b *LocalBackend) NewSSEServer() (broker *Broker) {
+	// Instantiate a broker
+	broker = &Broker{
+		Notifier:       make(chan []byte, 1),
+		newClients:     make(chan chan []byte),
+		closingClients: make(chan chan []byte),
+		clients:        make(map[chan []byte]bool),
+	}
+
+	// Set it running - listening and broadcasting events
+	go b.listenSSE()
+
+	return
+}
+
+func (b *LocalBackend) listenSSE() {
+	for {
+		select {
+		case s := <-b.broker.newClients:
+
+			// A new client has connected.
+			// Register their message channel
+			b.broker.clients[s] = true
+			log.Printf("Client added. %d registered clients", len(b.broker.clients))
+		case s := <-b.broker.closingClients:
+
+			// A client has dettached and we want to
+			// stop sending them messages.
+			delete(b.broker.clients, s)
+			log.Printf("Removed client. %d registered clients", len(b.broker.clients))
+		case event := <-b.broker.Notifier:
+
+			// We got a new event from the outside!
+			// Send event to all connected clients
+			for clientMessageChan := range b.broker.clients {
+				clientMessageChan <- event
+			}
+		}
+	}
+
+}
+
+func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Request) {
+	flusher, ok := w.(http.Flusher)
+
+	if !ok {
+		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	// Each connection registers its own message channel with the Broker's connections registry
+	messageChan := make(chan []byte)
+
+	// Signal the broker that we have a new connection
+	b.broker.newClients <- messageChan
+
+	// Remove this client from the map of connected clients
+	// when this handler exits.
+	defer func() {
+		b.broker.closingClients <- messageChan
+	}()
+
+	// Listen to connection close and un-register messageChan
+	// notify := rw.(http.CloseNotifier).CloseNotify()
+	notify := r.Context().Done()
+
+	go func() {
+		<-notify
+		b.broker.closingClients <- messageChan
+	}()
+
+	for {
+
+		// Write to the ResponseWriter
+		// Server Sent Events compatible
+		fmt.Fprintf(w, "data: %s\n\n", <-messageChan)
+
+		// Flush the data immediatly instead of buffering it for later.
+		flusher.Flush()
+	}
 }
 
 func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Request) {
