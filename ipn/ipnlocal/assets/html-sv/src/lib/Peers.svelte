@@ -4,16 +4,16 @@
     <table class="tb">
         <thead class="stick opaque py-2">
             <tr class="w-full md:text-base">
-                <th on:click={sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
-                <th on:click={sort("HostName")} class="pointer md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
-                <th on:click={sort("IPv4")} class="pointer hidden md:block md:w-1/8">IP</th>
-                <th on:click={sort("OS")} class="pointer hidden md:block md:w-1/12">OS</th>
-                <th on:click={sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
+                <th on:click={() =>sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
+                <th on:click={() =>sort("HostName")} class="pointer md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
+                <th on:click={() =>sort("IPv4")} class="pointer hidden md:block md:w-1/8">IP</th>
+                <th on:click={() =>sort("OS")} class="pointer hidden md:block md:w-1/12">OS</th>
+                <th on:click={() =>sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
                 <th class="hidden md:block md:w-1/12">Relay</th>
-                <th on:click={sort("DNSName")} class="pointer hidden md:block md:w-1/8">DNS</th>
-                <th on:click={sort("RX")} class="pointer hidden md:block md:w-1/12 text-right">rx</th>
-                <th on:click={sort("TX")} class="pointer hidden md:block md:w-1/12 text-right">tx</th>
-                <th on:click={sort("Created")} class="pointer hidden md:block md:w-1/12 text-right">Created</th>
+                <th on:click={() =>sort("DNSName")} class="pointer hidden md:block md:w-1/8">DNS</th>
+                <th on:click={() =>sort("RX")} class="pointer hidden md:block md:w-1/12 text-right">rx</th>
+                <th on:click={() =>sort("TX")} class="pointer hidden md:block md:w-1/12 text-right">tx</th>
+                <th on:click={() =>sort("Created")} class="pointer hidden md:block md:w-1/12 text-right">Created</th>
             </tr>
         </thead>
 
@@ -82,17 +82,23 @@
 }
 </style>
 
-<script>
+<script lang="ts">
+    import type { Peer } from "../types/types"
     import { onMount } from "svelte"
     import dayjs from 'dayjs'
     import relativeTime from 'dayjs/plugin/relativeTime'
     dayjs.extend(relativeTime)
+    import { FormatBytes } from "../js/lib"
 
-    import { FormatBytes } from "../js/lib";
 
-    export let data = []
+    export let data: Peer[] = []
 
-    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }
+    const options: Intl.DateTimeFormatOptions = { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    }
 
     let sortBy = {
         col: "HostName", 
@@ -103,11 +109,12 @@
         if (!u) return dayjs(t).fromNow()
         return "–"
     }
-    const bytes = b => {
+
+    const bytes = (b: number) => {
         return FormatBytes(b)
     }
 
-    $: sort = column => {
+    $: sort = (column: string) => {
 		
 		if (sortBy.col == column) {
 			sortBy.asc = !sortBy.asc
@@ -118,7 +125,7 @@
 		
 		let sortModifier = (sortBy.asc) ? 1 : -1;
 		
-		let sorter = (a, b) => {
+		let sorter = (a: Peer, b: Peer) => {
             let x = a[column].toLowerCase()
             let y = b[column].toLowerCase()
 			return (x < y) 
@@ -128,7 +135,7 @@
 			: 0;
         }
 		
-		data = data.sort(sorter);
+		data = data.sort(sorter)
 	}
 
     onMount( () => {

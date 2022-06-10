@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import NodeInfo from "./lib/Nodeinfo.svelte"
   import Peers from "./lib/Peers.svelte"
 </script>
