@@ -3653,21 +3653,21 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	fmt.Print("client connecting...")
+	fmt.Printf("client %s connecting...\n", r.Header.Get("Origin"))
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	// w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	host := r.Header.Get("Origin")
-	switch host {
-	case "http://localhost:3000", "http://0.0.0.0:5678", "http://100.100.100.100":
-		fmt.Printf("sse host %s\n\n", host)
-		w.Header().Set("Access-Control-Allow-Origin", host)
-	default:
-		fmt.Printf("default host %s\n\n", host)
-	}
+	// host := r.Header.Get("Origin")
+	// switch host {
+	// case "http://localhost:3000", "http://0.0.0.0:5678", "http://100.100.100.100":
+	// 	fmt.Printf("sse host %s\n\n", host)
+	// 	w.Header().Set("Access-Control-Allow-Origin", host)
+	// default:
+	// 	fmt.Printf("default host %s\n\n", host)
+	// }
 
 	// Each connection registers its own message channel with the Broker's connections registry
 	messageChan := make(chan []byte)
@@ -3690,15 +3690,29 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 		b.broker.closingClients <- messageChan
 	}()
 
-	for {
+	go func() {
+		for {
 
-		// Write to the ResponseWriter
-		// Server Sent Events compatible
-		fmt.Fprintf(w, "data: %s\n\n", <-messageChan)
+			// Write to the ResponseWriter
+			// Server Sent Events compatible
+			fmt.Fprintf(w, "data: %s\n\n", <-messageChan)
 
-		// Flush the data immediatly instead of buffering it for later.
-		flusher.Flush()
-	}
+			// Flush the data immediatly instead of buffering it for later.
+			flusher.Flush()
+		}
+	}()
+
+	msg := []byte(time.Now().Format(time.RFC3339))
+	fmt.Println(msg)
+	messageChan <- msg
+
+	go func() {
+		for range time.Tick(time.Minute * 5) {
+			msg := []byte(time.Now().Format(time.RFC3339))
+			fmt.Println(msg)
+			messageChan <- msg
+		}
+	}()
 }
 
 func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Request) {

@@ -146,9 +146,9 @@
     onMount( () => {
         sort("ID")
 
-        const sse = new EventSource(`http://100.100.100.100/event`)
+        const sse = new EventSource(`http://100.100.100.100/events/`)
         console.log("EventSource", sse)
-        sse.onmessage = (event) => {
+        sse.onmessage = event => {
             let response = JSON.parse(event.data)
             if(!response.length) {
                 console.log("sse response", response[0])
