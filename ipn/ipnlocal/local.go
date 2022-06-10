@@ -3457,8 +3457,8 @@ func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
 	// html endpoint
 	mux.Handle("/", http.FileServer(http.FS(assetsNormalized)))
 	// json api
+	mux.HandleFunc("/events/", b.handleQuad100Port80SSE)
 	mux.HandleFunc("/json/", b.handleQuad100Port80JSON)
-	mux.HandleFunc("/sse/", b.handleQuad100Port80SSE)
 
 	http.Serve(netutil.NewOneConnListener(c, nil), mux)
 }
@@ -3648,16 +3648,26 @@ func (b *LocalBackend) listenSSE() {
 
 func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
-
 	if !ok {
-		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
 		return
 	}
+
+	fmt.Print("client connecting...")
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	host := r.Header.Get("Origin")
+	switch host {
+	case "http://localhost:3000", "http://0.0.0.0:5678", "http://100.100.100.100":
+		fmt.Printf("sse host %s\n\n", host)
+		w.Header().Set("Access-Control-Allow-Origin", host)
+	default:
+		fmt.Printf("default host %s\n\n", host)
+	}
 
 	// Each connection registers its own message channel with the Broker's connections registry
 	messageChan := make(chan []byte)
@@ -3698,7 +3708,7 @@ func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Re
 	host := r.Header.Get("Origin")
 	switch host {
 	case "http://localhost:3000", "http://0.0.0.0:5678", "http://100.100.100.100":
-		fmt.Printf("case host %s\n\n", host)
+		fmt.Printf("json host %s\n\n", host)
 		w.Header().Set("Access-Control-Allow-Origin", host)
 	default:
 		fmt.Printf("default host %s\n\n", host)

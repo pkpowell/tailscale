@@ -2,18 +2,18 @@
 <div class="peers">
     <div class="py-8 text-3xl font-semibold tracking-tight leading-tight">Peers</div>
     <table class="tb">
-        <thead class="stick opaque">
-            <tr class="w-full px-0.5 hover:bg-gray-0">
-                <th on:click={sort("ID")} class="w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
-                <th on:click={sort("HostName")} class="md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
-                <th on:click={sort("IPv4")} class="hidden md:block md:w-1/8">IP</th>
-                <th on:click={sort("OS")} class="hidden md:block md:w-1/12">OS</th>
-                <th on:click={sort("LastSeen")} class="hidden md:block md:w-1/12">Last Seen</th>
+        <thead class="stick opaque py-2">
+            <tr class="w-full md:text-base">
+                <th on:click={sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
+                <th on:click={sort("HostName")} class="pointer md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
+                <th on:click={sort("IPv4")} class="pointer hidden md:block md:w-1/8">IP</th>
+                <th on:click={sort("OS")} class="pointer hidden md:block md:w-1/12">OS</th>
+                <th on:click={sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
                 <th class="hidden md:block md:w-1/12">Relay</th>
-                <th on:click={sort("DNSName")} class="hidden md:block md:w-1/8">DNS</th>
-                <th on:click={sort("RX")} class="hidden md:block md:w-1/12 text-right">rx</th>
-                <th on:click={sort("TX")} class="hidden md:block md:w-1/12 text-right">tx</th>
-                <th on:click={sort("Created")} class="hidden md:block md:w-1/12 text-right">Created</th>
+                <th on:click={sort("DNSName")} class="pointer hidden md:block md:w-1/8">DNS</th>
+                <th on:click={sort("RX")} class="pointer hidden md:block md:w-1/12 text-right">rx</th>
+                <th on:click={sort("TX")} class="pointer hidden md:block md:w-1/12 text-right">tx</th>
+                <th on:click={sort("Created")} class="pointer hidden md:block md:w-1/12 text-right">Created</th>
             </tr>
         </thead>
 
@@ -76,6 +76,10 @@
 
 <style>
 @import "../../../local.css";
+
+.pointer {
+    cursor: pointer;
+}
 </style>
 
 <script>
@@ -127,7 +131,23 @@
 		data = data.sort(sorter);
 	}
 
-    onMount(async () => {
+    onMount( () => {
         sort("ID")
+
+        const sse = new EventSource(`http://100.100.100.100/event`)
+        console.log("EventSource", sse)
+        sse.onmessage = (event) => {
+            let response = JSON.parse(event.data)
+            if(!response.length) {
+                console.log("sse response", response[0])
+            }
+        }
+        
+        // return () => {
+        //     if(sse.readyState === 1) {
+        //         console.log("sse closing")
+        //         sse.close()
+        //     }
+        // })
     })
 </script>
