@@ -23,13 +23,13 @@ class AppData {
     Peers: Peer[];
 }
 
-class Service {
+interface Service {
     Description: string;
     Port: number;
     Proto: string;
 }
 
-class Profile {
+interface Profile {
     ID: string;
     LoginName: string;
     DisplayName: string;
@@ -37,7 +37,7 @@ class Profile {
     Roles: object[];
 }
 
-class Peer {
+interface Peer {
     HostName: string;
     ID: string;
     NodeKey: string;
@@ -59,9 +59,13 @@ class Peer {
     CreatedTime: Date;
 }
 
-
+interface Base {
+    factor: number; 
+    suffix: string;
+}
 
 export type {
     Peer,
-    AppData
+    AppData,
+    Base
 }

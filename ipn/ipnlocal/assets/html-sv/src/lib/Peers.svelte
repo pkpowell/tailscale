@@ -83,7 +83,7 @@
 </style>
 
 <script lang="ts">
-    import type { Peer } from "../types/types"
+    import type { Peer, Base } from "../types/types"
     import { onMount } from "svelte"
     import dayjs from 'dayjs'
     import relativeTime from 'dayjs/plugin/relativeTime'
@@ -111,7 +111,12 @@
     }
 
     const bytes = (b: number) => {
-        return FormatBytes(b)
+        var base: Base = {
+            suffix: "b",
+            factor: 1024
+
+        }
+        return FormatBytes(b, base)
     }
 
     $: sort = (column: string) => {

@@ -116,7 +116,9 @@
     //     Peers: Peer[]
     // }
 
-    var data = <AppData>{};
+    var data = <AppData>{
+        Services: [],
+    };
 
     onMount(async () => {
         const response = await fetch(endpoint)

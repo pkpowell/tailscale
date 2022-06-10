@@ -1,8 +1,9 @@
-const Base2 = {
+import type { Base } from '../types/types'
+const Base2:Base = {
     factor: 1024, 
     suffix: "iB"
 }
-const Base10 = {
+const Base10:Base = {
     factor: 1000, 
     suffix: "B"
 }
@@ -43,12 +44,12 @@ const PRX = {
 }
 
 // FormatBytes converts bytes to KB, MiB etc without Math lib
-const FormatBytes = (b, u) => {
+const FormatBytes = (b: number, u: Base) => {
     if (typeof b !== "undefined") {
         if (typeof u === "undefined") {
             u = Base10
         }
-        b = parseInt(b)
+        // b = parseInt(b)
         // bytes only
         if (b === 0) {
             return "–"
