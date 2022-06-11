@@ -113,9 +113,6 @@ func RegisterNewSSHServer(fn newSSHServerFunc) {
 	newSSHServer = fn
 }
 
-// Example SSE server in Golang.
-//     $ go run sse.go
-
 type Broker struct {
 
 	// Events are pushed to this channel by the main events-gathering routine
@@ -166,7 +163,7 @@ type LocalBackend struct {
 	filterAtomic            atomic.Value // of *filter.Filter
 	containsViaIPFuncAtomic atomic.Value // of func(netaddr.IP) bool
 
-	broker Broker // sse
+	broker *Broker // sse
 
 	// The mutex protects the following elements.
 	mu             sync.Mutex
@@ -3454,6 +3451,8 @@ func (b *LocalBackend) HandleSSHConn(c net.Conn) (err error) {
 func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
 	mux := http.NewServeMux()
 
+	b.NewSSEServer()
+
 	// html endpoint
 	mux.Handle("/", http.FileServer(http.FS(assetsNormalized)))
 	// json api
@@ -3606,7 +3605,7 @@ func formatData(b *LocalBackend) (data statusData) {
 
 func (b *LocalBackend) NewSSEServer() (broker *Broker) {
 	// Instantiate a broker
-	broker = &Broker{
+	b.broker = &Broker{
 		Notifier:       make(chan []byte, 1),
 		newClients:     make(chan chan []byte),
 		closingClients: make(chan chan []byte),
@@ -3660,15 +3659,6 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	// host := r.Header.Get("Origin")
-	// switch host {
-	// case "http://localhost:3000", "http://0.0.0.0:5678", "http://100.100.100.100":
-	// 	fmt.Printf("sse host %s\n\n", host)
-	// 	w.Header().Set("Access-Control-Allow-Origin", host)
-	// default:
-	// 	fmt.Printf("default host %s\n\n", host)
-	// }
-
 	// Each connection registers its own message channel with the Broker's connections registry
 	messageChan := make(chan []byte)
 
@@ -3702,17 +3692,29 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 		}
 	}()
 
-	msg := []byte(time.Now().Format(time.RFC3339))
-	fmt.Println(msg)
-	messageChan <- msg
+	// msg := []byte(time.Now().Format(time.RFC3339))
+	// fmt.Println(msg)
+	// messageChan <- msg
 
-	go func() {
-		for range time.Tick(time.Minute * 5) {
-			msg := []byte(time.Now().Format(time.RFC3339))
+	for range time.Tick(time.Second * 2) {
+		go func() {
+			var message = MSG{
+				Timestamp: time.Now().Format(time.RFC3339),
+				Data:      "blah blah",
+			}
+			msg, err := json.Marshal(&message)
+			if err != nil {
+				panic(err)
+			}
 			fmt.Println(msg)
 			messageChan <- msg
-		}
-	}()
+		}()
+	}
+}
+
+type MSG struct {
+	Timestamp string `json:"timestamp"`
+	Data      string `json:"data"`
 }
 
 func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Request) {

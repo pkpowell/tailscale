@@ -151,7 +151,7 @@
         sse.onmessage = event => {
             let response = JSON.parse(event.data)
             if(!response.length) {
-                console.log("sse response", response[0])
+                console.log("sse response", response)
             }
         }
         
