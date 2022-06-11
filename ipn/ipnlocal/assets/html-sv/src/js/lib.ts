@@ -1,13 +1,16 @@
-import type { Base } from '../types/types'
+import type { Base, BPrefix } from '../types/types'
+
 const Base2:Base = {
     factor: 1024, 
     suffix: "iB"
 }
+
 const Base10:Base = {
     factor: 1000, 
     suffix: "B"
 }
-const PRX = {
+
+const PRX: BPrefix = {
     0: {
         short: 'K',
         full:  "kilo",

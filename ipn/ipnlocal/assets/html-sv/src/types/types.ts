@@ -64,8 +64,16 @@ interface Base {
     suffix: string;
 }
 
+interface BytePrefix {
+    short: string;
+    full: string;
+}
+
+type BPrefix = Record<number, BytePrefix>
+
 export type {
     Peer,
     AppData,
-    Base
+    Base,
+    BPrefix
 }

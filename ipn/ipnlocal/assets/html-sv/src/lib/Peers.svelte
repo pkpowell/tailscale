@@ -105,7 +105,7 @@
         asc: true
     }
 
-    const ago = (t, u) => {
+    const ago = (t: Date, u: boolean) => {
         if (!u) return dayjs(t).fromNow()
         return "–"
     }
