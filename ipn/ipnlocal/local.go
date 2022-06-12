@@ -559,9 +559,9 @@ func (b *LocalBackend) populatePeerStatusLocked(sb *ipnstate.StatusBuilder) {
 			SSH_HostKeys:   p.Hostinfo.SSH_HostKeys().AsSlice(),
 		}
 
-		event := &Event{
+		event := &Event[*ipnstate.PeerStatus]{
 			Type:    "peer",
-			Message: peer,
+			Payload: peer,
 		}
 
 		evt, err := json.Marshal(event)
@@ -3711,10 +3711,10 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 
 	for range time.Tick(time.Second * 2) {
 		go func() {
-			var event = Event{
+			var event = Event[*ping]{
 				Type:      "ping",
 				Timestamp: time.Now().Format(time.RFC3339),
-				// Message:      "blah blah",
+				Payload:   &ping{},
 			}
 			evt, err := json.Marshal(&event)
 			if err != nil {
@@ -3726,10 +3726,20 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 	}
 }
 
-type Event struct {
-	Type      string      `json:"type"`
-	Timestamp string      `json:"timestamp"`
-	Message   interface{} `json:"data"`
+type ping struct{}
+
+type payload interface {
+	*ipnstate.PeerData | *ipnstate.PeerStatus | *ping
+}
+
+// func New[T payload]() {
+// 	return payload[T]{}
+// }
+
+type Event[T payload] struct {
+	Type      string `json:"type"`
+	Timestamp string `json:"timestamp"`
+	Payload   T      `json:"payload,omitempty"`
 }
 
 func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Request) {
