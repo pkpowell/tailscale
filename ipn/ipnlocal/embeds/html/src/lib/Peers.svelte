@@ -83,8 +83,8 @@
 </style>
 
 <script lang="ts">
-    import type { Peer, Base } from "../types/types"
-    import { onMount } from "svelte"
+    import type { Peer, Base, SSEMessage } from "../types/types"
+    import { onMount, onDestroy } from "svelte"
     import dayjs from 'dayjs'
     import relativeTime from 'dayjs/plugin/relativeTime'
     dayjs.extend(relativeTime)
@@ -92,6 +92,8 @@
 
 
     export let data: Peer[] = []
+
+    let sse: EventSource = null
 
     const options: Intl.DateTimeFormatOptions = { 
         weekday: 'short', 
@@ -120,7 +122,7 @@
     }
 
     $: sort = (column: string) => {
-		
+		console.log("Sorting by %s", column)
 		if (sortBy.col == column) {
 			sortBy.asc = !sortBy.asc
 		} else {
@@ -143,15 +145,31 @@
 		data = data.sort(sorter)
 	}
 
+    onDestroy(() => {
+        if (sse !== null) {
+            sse.close()
+        }
+    })
+
     onMount( () => {
         sort("ID")
 
-        const sse = new EventSource(`http://100.100.100.100/events/`)
-        console.log("EventSource", sse)
-        sse.onmessage = event => {
-            let response = JSON.parse(event.data)
-            if(!response.length) {
-                console.log("sse response", response)
+        if (sse === null) {
+            sse = new EventSource(`http://100.100.100.100/events/`)
+            console.log("EventSource", sse)
+
+            sse.onmessage = event => {
+                let response: SSEMessage = JSON.parse(event.data)
+                if(!response.length) {
+                    console.log("sse response", response)
+                } else {
+                    console.warn("empty message", event)
+
+                }
+            }
+
+            sse.onerror = event => {
+                console.error("SSE error", event)
             }
         }
         

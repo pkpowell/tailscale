@@ -67,14 +67,14 @@ import (
 	"tailscale.com/wgengine/wgcfg/nmcfg"
 )
 
-//go:embed assets/html-sv/dist
-var assets embed.FS
+//go:embed embeds/html/dist
+var embeds embed.FS
 
-var assetsNormalized fs.FS
+var embedsNormalized fs.FS
 
 func init() {
 	var err error
-	assetsNormalized, err = fs.Sub(assets, "assets/html-sv/dist")
+	embedsNormalized, err = fs.Sub(embeds, "embeds/html/dist")
 	if err != nil {
 		panic(err)
 	}
@@ -537,7 +537,8 @@ func (b *LocalBackend) populatePeerStatusLocked(sb *ipnstate.StatusBuilder) {
 			v := views.IPPrefixSliceOf(p.PrimaryRoutes)
 			primaryRoutes = &v
 		}
-		sb.AddPeer(p.Key, &ipnstate.PeerStatus{
+
+		peer := &ipnstate.PeerStatus{
 			InNetworkMap:  true,
 			ID:            p.StableID,
 			UserID:        p.User,
@@ -556,7 +557,23 @@ func (b *LocalBackend) populatePeerStatusLocked(sb *ipnstate.StatusBuilder) {
 			ExitNode:       p.StableID != "" && p.StableID == b.prefs.ExitNodeID,
 			ExitNodeOption: exitNodeOption,
 			SSH_HostKeys:   p.Hostinfo.SSH_HostKeys().AsSlice(),
-		})
+		}
+
+		event := &Event{
+			Type:    "peer",
+			Message: peer,
+		}
+
+		evt, err := json.Marshal(event)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Printf("peer event %+v\n %+v\n", evt, event)
+
+		b.broker.Notifier <- evt
+
+		sb.AddPeer(p.Key, peer)
 	}
 }
 
@@ -3454,7 +3471,7 @@ func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
 	b.NewSSEServer()
 
 	// html endpoint
-	mux.Handle("/", http.FileServer(http.FS(assetsNormalized)))
+	mux.Handle("/", http.FileServer(http.FS(embedsNormalized)))
 	// json api
 	mux.HandleFunc("/events/", b.handleQuad100Port80SSE)
 	mux.HandleFunc("/json/", b.handleQuad100Port80JSON)
@@ -3692,29 +3709,27 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 		}
 	}()
 
-	// msg := []byte(time.Now().Format(time.RFC3339))
-	// fmt.Println(msg)
-	// messageChan <- msg
-
 	for range time.Tick(time.Second * 2) {
 		go func() {
-			var message = MSG{
+			var event = Event{
+				Type:      "ping",
 				Timestamp: time.Now().Format(time.RFC3339),
-				Data:      "blah blah",
+				// Message:      "blah blah",
 			}
-			msg, err := json.Marshal(&message)
+			evt, err := json.Marshal(&event)
 			if err != nil {
 				panic(err)
 			}
-			fmt.Println(msg)
-			messageChan <- msg
+			// fmt.Println(evt)
+			messageChan <- evt
 		}()
 	}
 }
 
-type MSG struct {
-	Timestamp string `json:"timestamp"`
-	Data      string `json:"data"`
+type Event struct {
+	Type      string      `json:"type"`
+	Timestamp string      `json:"timestamp"`
+	Message   interface{} `json:"data"`
 }
 
 func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Request) {

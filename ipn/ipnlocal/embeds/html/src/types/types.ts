@@ -68,6 +68,11 @@ interface BytePrefix {
     short: string;
     full: string;
 }
+interface SSEMessage {
+    length: number;
+    type: string;
+    data: any;
+}
 
 type BPrefix = Record<number, BytePrefix>
 
@@ -75,5 +80,6 @@ export type {
     Peer,
     AppData,
     Base,
-    BPrefix
+    BPrefix,
+    SSEMessage
 }
