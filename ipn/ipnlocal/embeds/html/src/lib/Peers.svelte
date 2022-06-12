@@ -161,15 +161,20 @@
             sse.onmessage = event => {
                 let response: SSEMessage = JSON.parse(event.data)
                 if(!response.length) {
-                    console.log("sse response", response)
+                    if (response.type !== "ping") {
+                        console.log("sse response", response)
+                    }
                 } else {
                     console.warn("empty message", event)
-
                 }
             }
 
             sse.onerror = event => {
                 console.error("SSE error", event)
+            }
+
+            sse.onopen = event => {
+                console.log("on open", event)
             }
         }
         

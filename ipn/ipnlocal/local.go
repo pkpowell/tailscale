@@ -163,7 +163,8 @@ type LocalBackend struct {
 	filterAtomic            atomic.Value // of *filter.Filter
 	containsViaIPFuncAtomic atomic.Value // of func(netaddr.IP) bool
 
-	broker *Broker // sse
+	broker      *Broker // sse
+	messageChan chan []byte
 
 	// The mutex protects the following elements.
 	mu             sync.Mutex
@@ -559,19 +560,20 @@ func (b *LocalBackend) populatePeerStatusLocked(sb *ipnstate.StatusBuilder) {
 			SSH_HostKeys:   p.Hostinfo.SSH_HostKeys().AsSlice(),
 		}
 
-		event := &Event[*ipnstate.PeerStatus]{
-			Type:    "peer",
-			Payload: peer,
+		event := Event[*ipnstate.PeerStatus]{
+			Type:      "peer",
+			Timestamp: time.Now().Format(time.RFC3339),
+			Payload:   peer,
 		}
 
-		evt, err := json.Marshal(event)
+		evt, err := json.Marshal(&event)
 		if err != nil {
 			panic(err)
 		}
 
-		fmt.Printf("peer event %+v\n %+v\n", evt, event)
+		fmt.Printf("peer event %+v\n", string(evt))
 
-		b.broker.Notifier <- evt
+		b.messageChan <- evt
 
 		sb.AddPeer(p.Key, peer)
 	}
@@ -3677,15 +3679,15 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Each connection registers its own message channel with the Broker's connections registry
-	messageChan := make(chan []byte)
+	b.messageChan = make(chan []byte)
 
 	// Signal the broker that we have a new connection
-	b.broker.newClients <- messageChan
+	b.broker.newClients <- b.messageChan
 
 	// Remove this client from the map of connected clients
 	// when this handler exits.
 	defer func() {
-		b.broker.closingClients <- messageChan
+		b.broker.closingClients <- b.messageChan
 	}()
 
 	// Listen to connection close and un-register messageChan
@@ -3694,7 +3696,7 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 
 	go func() {
 		<-notify
-		b.broker.closingClients <- messageChan
+		b.broker.closingClients <- b.messageChan
 	}()
 
 	go func() {
@@ -3702,28 +3704,45 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 
 			// Write to the ResponseWriter
 			// Server Sent Events compatible
-			fmt.Fprintf(w, "data: %s\n\n", <-messageChan)
+			msg := <-b.messageChan
+			fmt.Printf("sse message %s\n", string(msg))
+			fmt.Fprintf(w, "data: %s\n\n", msg)
 
 			// Flush the data immediatly instead of buffering it for later.
 			flusher.Flush()
 		}
 	}()
 
-	for range time.Tick(time.Second * 2) {
-		go func() {
-			var event = Event[*ping]{
-				Type:      "ping",
-				Timestamp: time.Now().Format(time.RFC3339),
-				Payload:   &ping{},
-			}
-			evt, err := json.Marshal(&event)
-			if err != nil {
-				panic(err)
-			}
-			// fmt.Println(evt)
-			messageChan <- evt
-		}()
+	var event = Event[*ping]{
+		Type:      "ping",
+		Timestamp: time.Now().Format(time.RFC3339),
+		Payload:   &ping{},
 	}
+	evt, err := json.Marshal(&event)
+	if err != nil {
+		panic(err)
+	}
+	// fmt.Println(evt)
+	b.messageChan <- evt
+
+	for {
+	}
+
+	// for range time.Tick(time.Second * 2) {
+	// 	go func() {
+	// 		var event = Event[*ping]{
+	// 			Type:      "ping",
+	// 			Timestamp: time.Now().Format(time.RFC3339),
+	// 			Payload:   &ping{},
+	// 		}
+	// 		evt, err := json.Marshal(&event)
+	// 		if err != nil {
+	// 			panic(err)
+	// 		}
+	// 		// fmt.Println(evt)
+	// 		b.messageChan <- evt
+	// 	}()
+	// }
 }
 
 type ping struct{}
