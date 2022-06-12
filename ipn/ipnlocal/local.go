@@ -3703,11 +3703,12 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 	}()
 
 	go func() {
+		var msg []byte
 		for {
 
 			// Write to the ResponseWriter
 			// Server Sent Events compatible
-			msg := <-b.messageChan
+			msg = <-b.messageChan
 			fmt.Printf("sse message %s\n", string(msg))
 			fmt.Fprintf(w, "data: %s\n\n", msg)
 
@@ -3715,6 +3716,9 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 			flusher.Flush()
 		}
 	}()
+
+	for {
+	}
 
 	// b.ssePing(3)
 }
