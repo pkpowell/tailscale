@@ -560,23 +560,26 @@ func (b *LocalBackend) populatePeerStatusLocked(sb *ipnstate.StatusBuilder) {
 			SSH_HostKeys:   p.Hostinfo.SSH_HostKeys().AsSlice(),
 		}
 
-		event := Event[*ipnstate.PeerStatus]{
-			Type:      "peer",
-			Timestamp: time.Now().Format(time.RFC3339),
-			Payload:   peer,
-		}
-
-		evt, err := json.Marshal(&event)
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Printf("peer event %+v\n", string(evt))
-
-		b.messageChan <- evt
+		// event := Event[*ipnstate.PeerStatus]{
+		// 	Type:      "peer",
+		// 	Timestamp: time.Now().Format(time.RFC3339),
+		// 	Payload:   peer,
+		// }
+		// event.Send(b.messageChan)
 
 		sb.AddPeer(p.Key, peer)
 	}
+}
+
+func (e Event[payload]) Send(c chan []byte) {
+	evt, err := json.Marshal(&e)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("peer event %+v\n", string(evt))
+
+	c <- evt
 }
 
 // WhoIs reports the node and user who owns the node with the given IP:port.
@@ -3713,36 +3716,18 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 		}
 	}()
 
-	var event = Event[*ping]{
-		Type:      "ping",
-		Timestamp: time.Now().Format(time.RFC3339),
-		Payload:   &ping{},
-	}
-	evt, err := json.Marshal(&event)
-	if err != nil {
-		panic(err)
-	}
-	// fmt.Println(evt)
-	b.messageChan <- evt
+	// b.ssePing(3)
+}
 
-	for {
+func (b *LocalBackend) ssePing(s time.Duration) {
+	for range time.Tick(time.Second * s) {
+		var event = Event[*ping]{
+			Type:      "ping",
+			Timestamp: time.Now().Format(time.RFC3339),
+			Payload:   &ping{},
+		}
+		event.Send(b.messageChan)
 	}
-
-	// for range time.Tick(time.Second * 2) {
-	// 	go func() {
-	// 		var event = Event[*ping]{
-	// 			Type:      "ping",
-	// 			Timestamp: time.Now().Format(time.RFC3339),
-	// 			Payload:   &ping{},
-	// 		}
-	// 		evt, err := json.Marshal(&event)
-	// 		if err != nil {
-	// 			panic(err)
-	// 		}
-	// 		// fmt.Println(evt)
-	// 		b.messageChan <- evt
-	// 	}()
-	// }
 }
 
 type ping struct{}
@@ -3750,10 +3735,6 @@ type ping struct{}
 type payload interface {
 	*ipnstate.PeerData | *ipnstate.PeerStatus | *ping
 }
-
-// func New[T payload]() {
-// 	return payload[T]{}
-// }
 
 type Event[T payload] struct {
 	Type      string `json:"type"`

@@ -163,6 +163,8 @@
                 if(!response.length) {
                     if (response.type !== "ping") {
                         console.log("sse response", response)
+                    } else {
+                        console.log("ping", response.timestamp)
                     }
                 } else {
                     console.warn("empty message", event)
