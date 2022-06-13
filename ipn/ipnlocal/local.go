@@ -560,26 +560,24 @@ func (b *LocalBackend) populatePeerStatusLocked(sb *ipnstate.StatusBuilder) {
 			SSH_HostKeys:   p.Hostinfo.SSH_HostKeys().AsSlice(),
 		}
 
-		// event := Event[*ipnstate.PeerStatus]{
-		// 	Type:      "peer",
-		// 	Timestamp: time.Now().Format(time.RFC3339),
-		// 	Payload:   peer,
-		// }
-		// event.Send(b.messageChan)
-
 		sb.AddPeer(p.Key, peer)
+
+		event := Event[*ipnstate.PeerStatus]{
+			Type:      "peer",
+			Timestamp: time.Now().Format(time.RFC3339),
+			Payload:   peer,
+		}
+		b.broker.Notifier <- event.Marshal()
 	}
 }
 
-func (e Event[payload]) Send(c chan []byte) {
+func (e Event[payload]) Marshal() []byte {
 	evt, err := json.Marshal(&e)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("peer event %+v\n", string(evt))
-
-	c <- evt
+	return evt
 }
 
 // WhoIs reports the node and user who owns the node with the given IP:port.
@@ -3641,22 +3639,21 @@ func (b *LocalBackend) listenSSE() {
 	for {
 		select {
 		case s := <-b.broker.newClients:
-
-			// A new client has connected.
-			// Register their message channel
+			// new client
 			b.broker.clients[s] = true
 			log.Printf("Client added. %d registered clients", len(b.broker.clients))
 		case s := <-b.broker.closingClients:
 
-			// A client has dettached and we want to
-			// stop sending them messages.
+			// remove client.
 			delete(b.broker.clients, s)
 			log.Printf("Removed client. %d registered clients", len(b.broker.clients))
+
 		case event := <-b.broker.Notifier:
 
-			// We got a new event from the outside!
-			// Send event to all connected clients
+			// broadcast event to all clients
+			log.Printf("sending event to %d clients", len(b.broker.clients))
 			for clientMessageChan := range b.broker.clients {
+				// fmt.Printf("sending event to %v", clientMessageChan)
 				clientMessageChan <- event
 			}
 		}
@@ -3671,7 +3668,7 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	fmt.Printf("client %s connecting...\n", r.Header.Get("Origin"))
+	log.Printf("client %s connecting...", r.Header.Get("Origin"))
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -3699,19 +3696,14 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 		b.broker.closingClients <- b.messageChan
 	}()
 
-	// go func() {
 	for {
-
 		// Write to the ResponseWriter
 		// Server Sent Events compatible
-		msg := <-b.messageChan
-		fmt.Printf("sse message %s\n", string(msg))
-		fmt.Fprintf(w, "data: %s\n\n", msg)
+		fmt.Fprintf(w, "data: %s\n\n", <-b.messageChan)
 
 		// Flush the data immediatly instead of buffering it for later.
 		flusher.Flush()
 	}
-	// }()
 }
 
 func (b *LocalBackend) ssePing(s time.Duration) {
@@ -3721,7 +3713,7 @@ func (b *LocalBackend) ssePing(s time.Duration) {
 			Timestamp: time.Now().Format(time.RFC3339),
 			Payload:   &ping{},
 		}
-		event.Send(b.messageChan)
+		b.broker.Notifier <- event.Marshal()
 	}
 }
 
