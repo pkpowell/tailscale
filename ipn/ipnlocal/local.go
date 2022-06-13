@@ -3474,6 +3474,8 @@ func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
 	mux := http.NewServeMux()
 
 	b.NewSSEServer()
+	go b.listenSSE()
+	go b.ssePing(3)
 
 	// html endpoint
 	mux.Handle("/", http.FileServer(http.FS(embedsNormalized)))
@@ -3625,7 +3627,7 @@ func formatData(b *LocalBackend) (data statusData) {
 	return
 }
 
-func (b *LocalBackend) NewSSEServer() (broker *Broker) {
+func (b *LocalBackend) NewSSEServer() {
 	// Instantiate a broker
 	b.broker = &Broker{
 		Notifier:       make(chan []byte, 1),
@@ -3633,11 +3635,6 @@ func (b *LocalBackend) NewSSEServer() (broker *Broker) {
 		closingClients: make(chan chan []byte),
 		clients:        make(map[chan []byte]bool),
 	}
-
-	// Set it running - listening and broadcasting events
-	go b.listenSSE()
-
-	return
 }
 
 func (b *LocalBackend) listenSSE() {
@@ -3702,25 +3699,19 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 		b.broker.closingClients <- b.messageChan
 	}()
 
-	go func() {
-		var msg []byte
-		for {
-
-			// Write to the ResponseWriter
-			// Server Sent Events compatible
-			msg = <-b.messageChan
-			fmt.Printf("sse message %s\n", string(msg))
-			fmt.Fprintf(w, "data: %s\n\n", msg)
-
-			// Flush the data immediatly instead of buffering it for later.
-			flusher.Flush()
-		}
-	}()
-
+	// go func() {
 	for {
-	}
 
-	// b.ssePing(3)
+		// Write to the ResponseWriter
+		// Server Sent Events compatible
+		msg := <-b.messageChan
+		fmt.Printf("sse message %s\n", string(msg))
+		fmt.Fprintf(w, "data: %s\n\n", msg)
+
+		// Flush the data immediatly instead of buffering it for later.
+		flusher.Flush()
+	}
+	// }()
 }
 
 func (b *LocalBackend) ssePing(s time.Duration) {
