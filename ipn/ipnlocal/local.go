@@ -3752,7 +3752,7 @@ func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Re
 	// w.Header().Set("Access-Control-Allow-Origin", "*")
 	host := r.Header.Get("Origin")
 	switch host {
-	case "http://localhost:3000", "http://0.0.0.0:5678", "http://100.100.100.100":
+	case "http://localhost:3636", "http://0.0.0.0:5678", "http://100.100.100.100":
 		fmt.Printf("json host %s\n\n", host)
 		w.Header().Set("Access-Control-Allow-Origin", host)
 	default:
