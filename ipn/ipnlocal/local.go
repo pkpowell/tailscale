@@ -3469,11 +3469,12 @@ func (b *LocalBackend) HandleSSHConn(c net.Conn) (err error) {
 // HandleQuad100Port80Conn serves http://100.100.100.100/ on port 80 (and
 // the equivalent tsaddr.TailscaleServiceIPv6 address).
 func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
+	log.Print("HandleQuad100Port80Conn called")
 	mux := http.NewServeMux()
 
 	b.NewSSEServer()
-	go b.listenSSE()
-	go b.ssePing(3)
+	// go b.listenSSE()
+	// go b.ssePing(3)
 
 	// html endpoint
 	mux.Handle("/", http.FileServer(http.FS(embedsNormalized)))
@@ -3633,6 +3634,11 @@ func (b *LocalBackend) NewSSEServer() {
 		closingClients: make(chan chan []byte),
 		clients:        make(map[chan []byte]bool),
 	}
+
+	go b.listenSSE()
+	go b.ssePing(3)
+	// Each connection registers its own message channel with the Broker's connections registry
+	// b.messageChan = make(chan []byte)
 }
 
 func (b *LocalBackend) listenSSE() {
@@ -3642,19 +3648,20 @@ func (b *LocalBackend) listenSSE() {
 			// new client
 			b.broker.clients[s] = true
 			log.Printf("Client added. %d registered clients", len(b.broker.clients))
-		case s := <-b.broker.closingClients:
 
+		case s := <-b.broker.closingClients:
 			// remove client.
 			delete(b.broker.clients, s)
 			log.Printf("Removed client. %d registered clients", len(b.broker.clients))
 
 		case event := <-b.broker.Notifier:
-
-			// broadcast event to all clients
-			log.Printf("sending event to %d clients", len(b.broker.clients))
-			for clientMessageChan := range b.broker.clients {
-				// fmt.Printf("sending event to %v", clientMessageChan)
-				clientMessageChan <- event
+			if len(b.broker.clients) > 0 {
+				// broadcast event to all clients
+				log.Printf("sending event to %d clients", len(b.broker.clients))
+				for clientMessageChan := range b.broker.clients {
+					// fmt.Printf("sending event to %v", clientMessageChan)
+					clientMessageChan <- event
+				}
 			}
 		}
 	}
@@ -3675,16 +3682,15 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	// Each connection registers its own message channel with the Broker's connections registry
-	b.messageChan = make(chan []byte)
+	messageChan := make(chan []byte)
 
 	// Signal the broker that we have a new connection
-	b.broker.newClients <- b.messageChan
+	b.broker.newClients <- messageChan
 
 	// Remove this client from the map of connected clients
 	// when this handler exits.
 	defer func() {
-		b.broker.closingClients <- b.messageChan
+		b.broker.closingClients <- messageChan
 	}()
 
 	// Listen to connection close and un-register messageChan
@@ -3693,13 +3699,13 @@ func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Req
 
 	go func() {
 		<-notify
-		b.broker.closingClients <- b.messageChan
+		b.broker.closingClients <- messageChan
 	}()
 
 	for {
 		// Write to the ResponseWriter
 		// Server Sent Events compatible
-		fmt.Fprintf(w, "data: %s\n\n", <-b.messageChan)
+		fmt.Fprintf(w, "data: %s\n\n", <-messageChan)
 
 		// Flush the data immediatly instead of buffering it for later.
 		flusher.Flush()
@@ -3730,6 +3736,7 @@ type Event[T payload] struct {
 }
 
 func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Request) {
+	log.Print("handleQuad100Port80JSON")
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("Content-Type", "application/json")
 	// w.Header().Set("Access-Control-Allow-Origin", "*")
