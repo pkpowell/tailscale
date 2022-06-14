@@ -3577,14 +3577,38 @@ func fmtAgo(a time.Duration) string {
 	return a.Round(time.Second).String() + " ago"
 }
 
-// func SortPeers(peers []*ipnstate.PeerData) {
-// 	sort.Slice(peers, func(i, j int) bool {
-// 		return peers[i].HostName < peers[j].HostName
-// 	})
-// }
+func getLocalData(b *LocalBackend) *statusData {
+	var data = &statusData{
+		OS:        b.hostinfo.OS,
+		OSVersion: b.hostinfo.OSVersion,
+		HostName:  b.hostinfo.Hostname,
+		Version:   b.hostinfo.IPNVersion,
+		Arch:      b.hostinfo.GoArch,
+		Services:  b.hostinfo.Services,
+		Name:      b.netMap.Name,
+		NodeKey:   b.netMap.NodeKey.ShortString(),
+		StableID:  b.netMap.SelfNode.StableID,
+		Created:   b.netMap.SelfNode.Created.Format(time.RFC3339),
+		ServerURL: b.serverURL,
+		Profile: tailcfg.UserProfile{
+			LoginName: b.activeLogin,
+		},
+	}
 
-func formatData(b *LocalBackend) (data statusData) {
+	for _, ip := range b.netMap.SelfNode.Addresses {
+		if ip.IP().Is6() {
+			data.IPv6 = ip.IP().String()
+		} else {
+			data.IPv4 = ip.IP().String()
+		}
+	}
+
+	return data
+}
+
+func formatData(b *LocalBackend) *statusData {
 	var st = b.Status()
+	var data = &statusData{}
 
 	peers := make([]*ipnstate.PeerData, 0)
 	for _, peer := range st.Peers() {
@@ -3594,8 +3618,6 @@ func formatData(b *LocalBackend) (data statusData) {
 		}
 		peers = append(peers, getPeerData(ps))
 	}
-
-	// fmt.Printf("data %+v \n\n", data)
 
 	data.Peers = peers
 	// SortPeers(data.Peers)
@@ -3622,7 +3644,7 @@ func formatData(b *LocalBackend) (data statusData) {
 		}
 	}
 
-	return
+	return data
 }
 
 func (b *LocalBackend) NewSSEServer() {
@@ -3647,11 +3669,14 @@ func (b *LocalBackend) listenSSE() {
 			// new client
 			b.broker.clients[s] = true
 			log.Printf("Client added. %d registered clients", len(b.broker.clients))
-			e := Event[payload]{
-				Type:    "local",
-				Payload: formatData(b),
-			}
-			s <- e.Marshal()
+
+			go func() {
+				e := Event[*statusData]{
+					Type:    "local",
+					Payload: getLocalData(b),
+				}
+				s <- e.Marshal()
+			}()
 
 		case s := <-b.broker.closingClients:
 			// remove client.
@@ -3730,7 +3755,7 @@ func (b *LocalBackend) ssePing(s time.Duration) {
 type ping struct{}
 
 type payload interface {
-	*ipnstate.PeerData | *ipnstate.PeerStatus | *ping | statusData
+	*ipnstate.PeerData | *ipnstate.PeerStatus | *ping | *statusData
 }
 
 type Event[T payload] struct {

@@ -102,7 +102,6 @@
     import Peers from './Peers.svelte'
 
     import type { AppData } from '../types/types'
-    // import App from "src/App.svelte"
 
     const endpoint = "http://100.100.100.100/json/"
     const options: Intl.DateTimeFormatOptions = { 
@@ -111,10 +110,6 @@
         month: 'short', 
         day: 'numeric' 
     }
-
-    // let data: AppData = {
-    //     Peers: Peer[]
-    // }
 
     var data = <AppData>{
         Services: [],
