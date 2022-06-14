@@ -3593,6 +3593,7 @@ func getLocalData(b *LocalBackend) *statusData {
 		Profile: tailcfg.UserProfile{
 			LoginName: b.activeLogin,
 		},
+		IPs: b.Status().TailscaleIPs,
 	}
 
 	for _, ip := range b.netMap.SelfNode.Addresses {

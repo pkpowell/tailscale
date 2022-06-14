@@ -23,6 +23,15 @@ class AppData {
     Peers: Peer[];
 }
 
+class Factory {
+    create<T>(type: (new () => T)): T {
+        return new type();
+    }
+}
+
+let factory = new Factory()
+let Appl = factory.create(AppData)
+
 interface Service {
     Description: string;
     Port: number;
@@ -72,6 +81,7 @@ interface SSEMessage {
     length: number;
     type: string;
     data: any;
+    payload: any;
 }
 
 type BPrefix = Record<number, BytePrefix>
@@ -79,6 +89,7 @@ type BPrefix = Record<number, BytePrefix>
 export type {
     Peer,
     AppData,
+    Appl,
     Base,
     BPrefix,
     SSEMessage

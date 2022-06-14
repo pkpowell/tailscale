@@ -18,7 +18,7 @@
         </thead>
 
         <tbody class="table-body">
-            {#each data as p}
+            {#each $peers as p}
             <tr class="table-row w-full px-0.5 hover:bg-gray-0">
                 <td class="w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">
                     <div class="relative">
@@ -83,17 +83,20 @@
 </style>
 
 <script lang="ts">
-    import type { Peer, Base, SSEMessage } from "../types/types"
-    import { onMount, onDestroy } from "svelte"
+    import { peers } from "../store/sse"
+    import type { 
+        Peer,
+        Base,
+        //  SSEMessage 
+    } from "../types/types"
+    import { 
+        // onMount,
+        //  onDestroy 
+    } from "svelte"
     import dayjs from 'dayjs'
     import relativeTime from 'dayjs/plugin/relativeTime'
     dayjs.extend(relativeTime)
     import { FormatBytes } from "../js/lib"
-
-
-    export let data: Peer[] = []
-
-    let sse: EventSource = null
 
     const options: Intl.DateTimeFormatOptions = { 
         weekday: 'short', 
@@ -142,49 +145,11 @@
 			: 0;
         }
 		
-		data = data.sort(sorter)
+		// data = data.sort(sorter)
 	}
 
-    onDestroy(() => {
-        if (sse !== null) {
-            sse.close()
-        }
-    })
+    // onDestroy(() => {
 
-    onMount( () => {
-        sort("ID")
+    // })
 
-        if (sse === null) {
-            sse = new EventSource(`http://100.100.100.100/events/`)
-            console.log("EventSource", sse)
-
-            sse.onmessage = event => {
-                let response: SSEMessage = JSON.parse(event.data)
-                if(!response.length) {
-                    if (response.type !== "ping") {
-                        console.log("sse response", response)
-                    } else {
-                        console.log("ping", response.timestamp)
-                    }
-                } else {
-                    console.warn("empty message", event)
-                }
-            }
-
-            sse.onerror = event => {
-                console.error("SSE error", event)
-            }
-
-            sse.onopen = event => {
-                console.log("on open", event)
-            }
-        }
-        
-        // return () => {
-        //     if(sse.readyState === 1) {
-        //         console.log("sse closing")
-        //         sse.close()
-        //     }
-        // })
-    })
 </script>
