@@ -3469,12 +3469,11 @@ func (b *LocalBackend) HandleSSHConn(c net.Conn) (err error) {
 // HandleQuad100Port80Conn serves http://100.100.100.100/ on port 80 (and
 // the equivalent tsaddr.TailscaleServiceIPv6 address).
 func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
-	log.Print("HandleQuad100Port80Conn called")
 	mux := http.NewServeMux()
 
-	b.NewSSEServer()
-	// go b.listenSSE()
-	// go b.ssePing(3)
+	if b.broker == nil {
+		b.NewSSEServer()
+	}
 
 	// html endpoint
 	mux.Handle("/", http.FileServer(http.FS(embedsNormalized)))
@@ -3648,6 +3647,11 @@ func (b *LocalBackend) listenSSE() {
 			// new client
 			b.broker.clients[s] = true
 			log.Printf("Client added. %d registered clients", len(b.broker.clients))
+			e := Event[payload]{
+				Type:    "local",
+				Payload: formatData(b),
+			}
+			s <- e.Marshal()
 
 		case s := <-b.broker.closingClients:
 			// remove client.
@@ -3659,7 +3663,7 @@ func (b *LocalBackend) listenSSE() {
 				// broadcast event to all clients
 				log.Printf("sending event to %d clients", len(b.broker.clients))
 				for clientMessageChan := range b.broker.clients {
-					// fmt.Printf("sending event to %v", clientMessageChan)
+					log.Printf("sending event to %v", clientMessageChan)
 					clientMessageChan <- event
 				}
 			}
@@ -3726,7 +3730,7 @@ func (b *LocalBackend) ssePing(s time.Duration) {
 type ping struct{}
 
 type payload interface {
-	*ipnstate.PeerData | *ipnstate.PeerStatus | *ping
+	*ipnstate.PeerData | *ipnstate.PeerStatus | *ping | statusData
 }
 
 type Event[T payload] struct {
