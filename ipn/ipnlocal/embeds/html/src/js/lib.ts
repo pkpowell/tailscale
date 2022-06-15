@@ -71,7 +71,7 @@ const FormatBytes = (b: number, u: Base) => {
             exp++
         }
         let f = (b / div).toFixed(2) + PRX[exp].short + u.suffix
-        console.log("formatted bytes", f)
+        // console.log("formatted bytes", f)
 
         return f
     } else {

@@ -60,8 +60,8 @@ sse.onmessage = event => {
                 console.warn("unknown payload", response.payload)
                 break;
         }
-    } else {
-        console.warn("empty message", event)
+    // } else {
+    //     console.warn("empty message", event)
     }
 }
 
@@ -73,7 +73,10 @@ sse.onopen = event => {
     console.log("on open", event)
 }
 
-
 export {
-    local, peers, localReady, peersReady, peerMap
+    local,
+    peers, 
+    localReady,
+    peersReady, 
+    peerMap
 }

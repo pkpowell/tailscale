@@ -124,11 +124,13 @@
     }
 
     let copy = (st: string) => {
-        navigator.clipboard.writeText(st).then(() => {
-            console.log("copied ", st)
-        }, err => {
-            console.log("copy failed ", err)
-        })
+        if (typeof window !== 'undefined') {
+            navigator.clipboard.writeText(st).then(() => {
+                console.log("copied ", st)
+            }, err => {
+                console.log("copy failed ", err)
+            })
+        }
     }
 
     let sortBy = {
