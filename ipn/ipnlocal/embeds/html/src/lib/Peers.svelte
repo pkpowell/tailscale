@@ -18,7 +18,7 @@
         </thead>
 
         <tbody class="table-body">
-            {#each $peers as p}
+            {#each $peerArray as p}
             <tr class="table-row w-full px-0.5 hover:bg-gray-0">
                 <td class="w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">
                     <div class="relative">
@@ -83,7 +83,7 @@
 </style>
 
 <script lang="ts">
-    import { peers } from "../store/sse"
+    import { peerMap } from "../store/sse"
     import type { 
         Peer,
         Base,
@@ -103,6 +103,10 @@
         year: 'numeric', 
         month: 'short', 
         day: 'numeric' 
+    }
+
+    $: peerArray => {
+        return Array.from($peerMap)
     }
 
     let sortBy = {

@@ -17,12 +17,7 @@ const peerMap = writable<Map<string, Peer>>(new Map<string, Peer>())
 //     peerMap.set((x)=>x=m)
 // }
 const updatePeers = (p: Peer) => {
-    peerMap.update(records =>{
-        // if (typeof records !== "undefined") 
-        console.log("records",records)
-        return records.set(p.ID, p)
-        // records.set(p.ID,  p)
-    })
+    peerMap.update(records => records.set(p.ID, p))
 }
 
 const appendPeer =  (p: Peer) => {

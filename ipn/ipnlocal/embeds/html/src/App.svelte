@@ -50,7 +50,7 @@
 
 <header class="flex bg-gray-100 items-center py-2 mb-8">
     <NodeInfo />
-    <!-- <Peers /> -->
+    <Peers />
 </header>
 
 <style>
