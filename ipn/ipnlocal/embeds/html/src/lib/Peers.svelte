@@ -66,8 +66,8 @@
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RxBytes)}</td>
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TxBytes)}</td>
                 <td class="hidden md:block md:w-1/12 text-right"><span>
-                    <div>{p.CreatedDate}</div>
-                    <div>{p.CreatedTime}</div>
+                    <div>{new Date(p.Created).toLocaleDateString("en-US", options)}</div>
+                    <!-- <div>{p.CreatedTime}</div> -->
                 </span></td>
             </tr>
             {/each}
@@ -109,7 +109,7 @@
     dayjs.extend(relativeTime)
 
     const options: Intl.DateTimeFormatOptions = { 
-        weekday: 'short', 
+        // weekday: 'short', 
         year: 'numeric', 
         month: 'short', 
         day: 'numeric' 
@@ -119,11 +119,11 @@
 
     $: peers = () => {
         let p = [...$peerMap.entries()].map(x=>x[1])
-        console.log("peers", p)
+        // console.log("peers", p)
         return p.sort(sorter)
     }
 
-    const copy=(st: string) => {
+    let copy = (st: string) => {
         navigator.clipboard.writeText(st).then(() => {
             console.log("copied ", st)
         }, err => {
@@ -151,24 +151,31 @@
     }
 
     $: sort = (column: string) => {
-		// console.log("Sorting by %s", column)
-		if (sortBy.col == column) {
-			sortBy.asc = !sortBy.asc
-		} else {
-			sortBy.col = column
-			sortBy.asc = true
-		}
-		
-		let sortModifier = (sortBy.asc) ? 1 : -1;
-		
-		sorter = (a: Peer, b: Peer) => {
-            let x = a[column].toLowerCase()
-            let y = b[column].toLowerCase()
-			return (x < y) 
-			? -1 * sortModifier 
-			: (x > y) 
-			? 1 * sortModifier 
-			: 0;
+        switch (column) {
+            case "IPv4":
+                break;
+        
+            default:
+            // console.log("Sorting by %s", column)
+            if (sortBy.col == column) {
+                sortBy.asc = !sortBy.asc
+            } else {
+                sortBy.col = column
+                sortBy.asc = true
+            }
+            
+            let sortModifier = (sortBy.asc) ? 1 : -1;
+            
+            sorter = (a: Peer, b: Peer) => {
+                let x = a[column].toLowerCase()
+                let y = b[column].toLowerCase()
+                return (x < y) 
+                ? -1 * sortModifier 
+                : (x > y) 
+                ? 1 * sortModifier 
+                : 0;
+            }
+            break;
         }
 
 	}
