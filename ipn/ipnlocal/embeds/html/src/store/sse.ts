@@ -26,7 +26,15 @@ const updatePeers = (p: Peer) => {
 const localReady = writable(false)
 const peersReady = writable(false)
 
-let sse = new EventSource(`http://100.100.100.100/events/`)
+let sseUrl: string
+
+if (import.meta.env.DEV) {
+    sseUrl = `//100.100.100.100/events/`
+} else {
+    sseUrl = `/events/`
+}
+
+let sse = new EventSource(sseUrl)
 
 sse.onmessage = event => {
     let response: SSEMessage = JSON.parse(event.data)
