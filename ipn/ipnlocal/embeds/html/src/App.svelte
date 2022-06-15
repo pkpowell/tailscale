@@ -13,11 +13,11 @@
 <style>
   @import "../../local.css";
 
-  :root {
+  /* :root {
     font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 100%;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
+  } */
 
 </style>
