@@ -1,6 +1,6 @@
 
     <div class="width-80">
-
+        {#if $localReady}
         <div class="flex py-8">
 
             <img src={logo} alt="Svelte Logo" class="w-8 pr-3"/>
@@ -91,11 +91,11 @@
                 </span>
             </div>
         </div>
-
+        {/if}
     </div>
 
 <script lang="ts">
-    import { local } from "../store/sse"
+    import { local, localReady } from "../store/sse"
     // import { onMount } from "svelte"
     import logo from '../assets/logo.svg'
     import device from '../assets/device.svg'

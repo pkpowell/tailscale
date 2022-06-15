@@ -1,15 +1,36 @@
 import { writable } from 'svelte/store'
+// import type { Writable } from 'svelte/store'
+
 import type { 
-      Peer, 
+    Peer, 
     AppData, 
     SSEMessage
 } from "../types/types"
 
-const local = writable({})
+const local = writable<AppData>()
 // const local = writable<AppData>()
 // local.update(value => Object.assign(value, {HostName: ""}))
-const peers = writable([])
-// const peers = writable<Peer[]>()
+const peers = writable<Peer[]>()
+// let m = new Map<number, Peer>
+const peerMap = writable<Map<string, Peer>>()
+
+const updatePeers = (p: Peer) => {
+    peerMap.update(({records})=>{
+        records.set(p.ID,  p)
+    })
+}
+
+const appendPeer =  (p: Peer) => {
+    peers.update(current => {
+        if (current === null ||  typeof current === "undefined") current = []
+        console.log("current", current)
+        current = [...current, p]
+        return current
+    })
+}
+
+const localReady = writable(false)
+const peersReady = writable(false)
 
 let sse = new EventSource(`http://100.100.100.100/events/`)
 
@@ -24,12 +45,14 @@ sse.onmessage = event => {
             case "local":
                 console.log("local", response.payload)
                 local.set(response.payload)
+                localReady.set(true)
                 // local.update(value => Object.assign(value, response.payload))
                 break;
-
-            case "peer":
-                console.log("peer", response.payload)
-                // $peers = [...$peers, response.payload]
+                
+                case "peer":
+                    console.log("peer", response.payload)
+                    updatePeers(response.payload)
+                    peersReady.set(true)
                 // peers.set(response.payload)
                 break;
         
@@ -52,5 +75,5 @@ sse.onopen = event => {
 
 
 export {
-    local, peers
+    local, peers, localReady, peersReady, peerMap
 }
