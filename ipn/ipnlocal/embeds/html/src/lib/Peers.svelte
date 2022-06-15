@@ -18,7 +18,11 @@
         </thead>
 
         <tbody class="table-body">
-            {#each $peerArray as p}
+
+            {#if $peersReady}
+            {#each peers() as p}
+            <!-- {#each [...$peerMap.entries()] as [key, p], index (key)} -->
+
             <tr class="table-row w-full px-0.5 hover:bg-gray-0">
                 <td class="w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">
                     <div class="relative">
@@ -41,35 +45,33 @@
                     
                 </td>
                 <td class="hidden md:block md:w-1/8">
+                    {#if p.TailscaleIPs }
                     <ul>
-                    <li class="pr-6">
-                        <div class="flex relative min-w-0">
-                            <div class="truncate">
-                                <span>{p.IPv4}</span>
+                        {#each p.TailscaleIPs as ip}
+                        <li on:click={()=>copy(ip)} class="pr-6">
+                            <div class="flex relative min-w-0">
+                                <div class="truncate">
+                                    <span>{ip}</span>
+                                </div>
                             </div>
-                        </div>
-                    </li>
-                    <li class="pr-6">
-                        <div class="flex relative min-w-0">
-                            <div class="truncate">
-                                <span>{p.IPv6}</span>
-                            </div>
-                        </div>
-                    </li>
+                        </li>
+                        {/each}
                     </ul>
+                    {/if}
                 </td>
                 <td class="hidden md:block md:w-1/12 ">{p.OS}</td>
                 <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", options)}">{ago(p.LastSeen, p.Unseen)}</td>
-                <td class="hidden md:block md:w-1/12">{p.Connection}</td>
-                <td class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td>
-                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RXb)}</td>
-                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TXb)}</td>
+                <td class="hidden md:block md:w-1/12">{p.Relay}</td>
+                <td on:click={()=>copy(p.DNSName)} class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td>
+                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RxBytes)}</td>
+                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TxBytes)}</td>
                 <td class="hidden md:block md:w-1/12 text-right"><span>
                     <div>{p.CreatedDate}</div>
                     <div>{p.CreatedTime}</div>
                 </span></td>
             </tr>
             {/each}
+            {/if}
         </tbody>
     </table>
 </div>
@@ -83,20 +85,28 @@
 </style>
 
 <script lang="ts">
-    import { peerMap } from "../store/sse"
+    import { 
+        peerMap, 
+        peersReady, 
+        // peers 
+    } from "../store/sse"
+
     import type { 
         Peer,
         Base,
         //  SSEMessage 
     } from "../types/types"
+
     import { 
-        // onMount,
+        onMount,
         //  onDestroy 
     } from "svelte"
+
+    import { FormatBytes } from "../js/lib"
     import dayjs from 'dayjs'
     import relativeTime from 'dayjs/plugin/relativeTime'
+
     dayjs.extend(relativeTime)
-    import { FormatBytes } from "../js/lib"
 
     const options: Intl.DateTimeFormatOptions = { 
         weekday: 'short', 
@@ -105,13 +115,25 @@
         day: 'numeric' 
     }
 
-    $: peerArray => {
-        return Array.from($peerMap)
+    let sorter: (a: Peer, b: Peer) => number
+
+    $: peers = () => {
+        let p = [...$peerMap.entries()].map(x=>x[1])
+        console.log("peers", p)
+        return p.sort(sorter)
+    }
+
+    const copy=(st: string) => {
+        navigator.clipboard.writeText(st).then(() => {
+            console.log("copied ", st)
+        }, err => {
+            console.log("copy failed ", err)
+        })
     }
 
     let sortBy = {
         col: "HostName", 
-        asc: true
+        asc: false
     }
 
     const ago = (t: Date, u: boolean) => {
@@ -129,7 +151,7 @@
     }
 
     $: sort = (column: string) => {
-		console.log("Sorting by %s", column)
+		// console.log("Sorting by %s", column)
 		if (sortBy.col == column) {
 			sortBy.asc = !sortBy.asc
 		} else {
@@ -139,7 +161,7 @@
 		
 		let sortModifier = (sortBy.asc) ? 1 : -1;
 		
-		let sorter = (a: Peer, b: Peer) => {
+		sorter = (a: Peer, b: Peer) => {
             let x = a[column].toLowerCase()
             let y = b[column].toLowerCase()
 			return (x < y) 
@@ -148,12 +170,10 @@
 			? 1 * sortModifier 
 			: 0;
         }
-		
-		// data = data.sort(sorter)
+
 	}
-
-    // onDestroy(() => {
-
-    // })
+    onMount(async() =>{
+        sort("HostName")
+    })
 
 </script>

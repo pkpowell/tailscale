@@ -8,11 +8,9 @@
 package ipnstate
 
 import (
-	"bytes"
 	"embed"
 	"fmt"
 	"html"
-	"html/template"
 	"log"
 	"net"
 	"net/http"
@@ -258,7 +256,7 @@ func (sb *StatusBuilder) AddTailscaleIP(ip netaddr.IP) {
 // AddPeer adds a peer node to the status.
 //
 // Its PeerStatus is mixed with any previous status already added.
-func (sb *StatusBuilder) AddPeer(peer key.NodePublic, st *PeerStatus) {
+func (sb *StatusBuilder) AddPeer(peer key.NodePublic, st *PeerStatus) (e *PeerStatus) {
 
 	if st == nil {
 		panic("nil PeerStatus")
@@ -364,6 +362,8 @@ func (sb *StatusBuilder) AddPeer(peer key.NodePublic, st *PeerStatus) {
 	if st.Active {
 		e.Active = true
 	}
+
+	return e
 }
 
 type StatusUpdater interface {
@@ -413,23 +413,8 @@ type PeerData struct {
 	RXb         int64                `json:"RXb"`
 }
 
-var tmpl *template.Template
-
 //go:embed assets/*.html assets/*.css
 var assets embed.FS
-
-func init() {
-	htmlData, err := assets.ReadFile("assets/status.html")
-	if err != nil {
-		panic(err)
-	}
-	cssData, err := assets.ReadFile("assets/status.css")
-	if err != nil {
-		panic(err)
-	}
-	tmpl = template.Must(template.New("HTML").Parse(string(htmlData)))
-	template.Must(tmpl.New("statusCSS").Parse(string(cssData)))
-}
 
 func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 	var data statusData
@@ -505,12 +490,12 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		}
 	}
 
-	buf := new(bytes.Buffer)
-	if err := tmpl.Execute(buf, data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		fmt.Printf("an error happened %v", err)
-	}
-	w.Write(buf.Bytes())
+	// buf := new(bytes.Buffer)
+	// if err := tmpl.Execute(buf, data); err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	fmt.Printf("an error happened %v", err)
+	// }
+	// w.Write(buf.Bytes())
 }
 
 type Prefix struct {

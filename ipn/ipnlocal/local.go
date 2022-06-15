@@ -560,12 +560,12 @@ func (b *LocalBackend) populatePeerStatusLocked(sb *ipnstate.StatusBuilder) {
 			SSH_HostKeys:   p.Hostinfo.SSH_HostKeys().AsSlice(),
 		}
 
-		sb.AddPeer(p.Key, peer)
+		ps := sb.AddPeer(p.Key, peer)
 
 		event := Event[*ipnstate.PeerStatus]{
 			Type:      "peer",
 			Timestamp: time.Now().Format(time.RFC3339),
-			Payload:   peer,
+			Payload:   ps,
 		}
 		b.broker.Notifier <- event.Marshal()
 	}
@@ -3475,11 +3475,14 @@ func (b *LocalBackend) HandleQuad100Port80Conn(c net.Conn) {
 		b.NewSSEServer()
 	}
 
-	// html endpoint
+	// html endpoint, serves embed directory
 	mux.Handle("/", http.FileServer(http.FS(embedsNormalized)))
-	// json api
+
+	// sse endpoint
 	mux.HandleFunc("/events/", b.handleQuad100Port80SSE)
-	mux.HandleFunc("/json/", b.handleQuad100Port80JSON)
+
+	// json api - defunct
+	// mux.HandleFunc("/json/", b.handleQuad100Port80JSON)
 
 	http.Serve(netutil.NewOneConnListener(c, nil), mux)
 }
@@ -3607,46 +3610,46 @@ func getLocalData(b *LocalBackend) *statusData {
 	return data
 }
 
-func formatData(b *LocalBackend) *statusData {
-	var st = b.Status()
-	var data = &statusData{}
+// func formatData(b *LocalBackend) *statusData {
+// 	var st = b.Status()
+// 	var data = &statusData{}
 
-	peers := make([]*ipnstate.PeerData, 0)
-	for _, peer := range st.Peers() {
-		ps := st.Peer[peer]
-		if ps.ShareeNode {
-			continue
-		}
-		peers = append(peers, getPeerData(ps))
-	}
+// 	peers := make([]*ipnstate.PeerData, 0)
+// 	for _, peer := range st.Peers() {
+// 		ps := st.Peer[peer]
+// 		if ps.ShareeNode {
+// 			continue
+// 		}
+// 		peers = append(peers, getPeerData(ps))
+// 	}
 
-	data.Peers = peers
-	// SortPeers(data.Peers)
+// 	data.Peers = peers
+// 	// SortPeers(data.Peers)
 
-	data.OS = b.hostinfo.OS
-	data.OSVersion = b.hostinfo.OSVersion
-	data.HostName = b.hostinfo.Hostname
-	data.Version = b.hostinfo.IPNVersion
-	data.Arch = b.hostinfo.GoArch
-	data.Services = b.hostinfo.Services
-	data.Name = b.netMap.Name
-	data.NodeKey = b.netMap.NodeKey.ShortString()
-	data.StableID = b.netMap.SelfNode.StableID
-	data.Created = b.netMap.SelfNode.Created.Format(time.RFC3339)
+// 	data.OS = b.hostinfo.OS
+// 	data.OSVersion = b.hostinfo.OSVersion
+// 	data.HostName = b.hostinfo.Hostname
+// 	data.Version = b.hostinfo.IPNVersion
+// 	data.Arch = b.hostinfo.GoArch
+// 	data.Services = b.hostinfo.Services
+// 	data.Name = b.netMap.Name
+// 	data.NodeKey = b.netMap.NodeKey.ShortString()
+// 	data.StableID = b.netMap.SelfNode.StableID
+// 	data.Created = b.netMap.SelfNode.Created.Format(time.RFC3339)
 
-	data.ServerURL = b.serverURL
-	data.Profile.LoginName = b.activeLogin
+// 	data.ServerURL = b.serverURL
+// 	data.Profile.LoginName = b.activeLogin
 
-	for _, ip := range b.netMap.SelfNode.Addresses {
-		if ip.IP().Is6() {
-			data.IPv6 = ip.IP().String()
-		} else {
-			data.IPv4 = ip.IP().String()
-		}
-	}
+// 	for _, ip := range b.netMap.SelfNode.Addresses {
+// 		if ip.IP().Is6() {
+// 			data.IPv6 = ip.IP().String()
+// 		} else {
+// 			data.IPv4 = ip.IP().String()
+// 		}
+// 	}
 
-	return data
-}
+// 	return data
+// }
 
 func (b *LocalBackend) NewSSEServer() {
 	// Instantiate a broker
@@ -3687,7 +3690,7 @@ func (b *LocalBackend) listenSSE() {
 		case event := <-b.broker.Notifier:
 			if len(b.broker.clients) > 0 {
 				// broadcast event to all clients
-				log.Printf("sending event to %d clients", len(b.broker.clients))
+				log.Printf("broadcast event to %d clients", len(b.broker.clients))
 				for clientMessageChan := range b.broker.clients {
 					log.Printf("sending event to %v", clientMessageChan)
 					clientMessageChan <- event
@@ -3765,36 +3768,36 @@ type Event[T payload] struct {
 	Payload   T      `json:"payload,omitempty"`
 }
 
-func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Request) {
-	log.Print("handleQuad100Port80JSON")
-	w.Header().Set("X-Frame-Options", "DENY")
-	w.Header().Set("Content-Type", "application/json")
-	// w.Header().Set("Access-Control-Allow-Origin", "*")
-	host := r.Header.Get("Origin")
-	switch host {
-	case "http://localhost:3636", "http://0.0.0.0:5678", "http://100.100.100.100":
-		fmt.Printf("json host %s\n\n", host)
-		w.Header().Set("Access-Control-Allow-Origin", host)
-	default:
-		fmt.Printf("default host %s\n\n", host)
-	}
+// func (b *LocalBackend) handleQuad100Port80JSON(w http.ResponseWriter, r *http.Request) {
+// 	log.Print("handleQuad100Port80JSON")
+// 	w.Header().Set("X-Frame-Options", "DENY")
+// 	w.Header().Set("Content-Type", "application/json")
+// 	// w.Header().Set("Access-Control-Allow-Origin", "*")
+// 	host := r.Header.Get("Origin")
+// 	switch host {
+// 	case "http://localhost:3636", "http://0.0.0.0:5678", "http://100.100.100.100":
+// 		fmt.Printf("json host %s\n\n", host)
+// 		w.Header().Set("Access-Control-Allow-Origin", host)
+// 	default:
+// 		fmt.Printf("default host %s\n\n", host)
+// 	}
 
-	if r.Method != "GET" && r.Method != "HEAD" {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	data := formatData(b)
+// 	if r.Method != "GET" && r.Method != "HEAD" {
+// 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
+// 	data := formatData(b)
 
-	b.mu.Lock()
-	defer b.mu.Unlock()
+// 	b.mu.Lock()
+// 	defer b.mu.Unlock()
 
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		fmt.Printf("a json.Marshal error happened %v", err)
-		// panic(err)
-	}
-	w.Write(jsonData)
-}
+// 	jsonData, err := json.Marshal(data)
+// 	if err != nil {
+// 		fmt.Printf("a json.Marshal error happened %v", err)
+// 		// panic(err)
+// 	}
+// 	w.Write(jsonData)
+// }
 
 // func (b *LocalBackend) handleQuad100Port80Conn(w http.ResponseWriter, r *http.Request) {
 // 	w.Header().Set("X-Frame-Options", "DENY")
