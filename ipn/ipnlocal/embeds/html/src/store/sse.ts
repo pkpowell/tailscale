@@ -11,12 +11,17 @@ const local = writable<AppData>()
 // const local = writable<AppData>()
 // local.update(value => Object.assign(value, {HostName: ""}))
 const peers = writable<Peer[]>()
-// let m = new Map<number, Peer>
-const peerMap = writable<Map<string, Peer>>()
+const peerMap = writable<Map<string, Peer>>(new Map<string, Peer>())
 
+// const setPeers = () => {
+//     peerMap.set((x)=>x=m)
+// }
 const updatePeers = (p: Peer) => {
-    peerMap.update(({records})=>{
-        records.set(p.ID,  p)
+    peerMap.update(records =>{
+        // if (typeof records !== "undefined") 
+        console.log("records",records)
+        return records.set(p.ID, p)
+        // records.set(p.ID,  p)
     })
 }
 
