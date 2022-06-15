@@ -1,6 +1,6 @@
 
     <div class="width-80">
-        {#if $local.Name}
+
         <div class="flex py-8">
 
             <img src={logo} alt="Svelte Logo" class="w-8 pr-3"/>
@@ -80,16 +80,18 @@
             <div class="services keyval">
                 <span class="key md:w-1/8">Services</span> 
                 <span class="val md:w-1/3">
+                    {#if $local.Services}
                     {#each $local.Services as s}
                     <div class=" flex">
                         <span class="font-semibold md:w-1/3">{s.Description}</span> 
                         <span class="md:w-1/4">{s.Proto} <span>{s.Port}</span></span> 
                     </div>
                     {/each} 
+                    {/if}
                 </span>
             </div>
         </div>
-        {/if}
+
     </div>
 
 <script lang="ts">
