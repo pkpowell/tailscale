@@ -6,7 +6,7 @@
             <tr class="w-full md:text-base">
                 <th on:click={() =>sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
                 <th on:click={() =>sort("HostName")} class="pointer md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
-                <th on:click={() =>sort("IPv4Num")} class="pointer hidden md:block md:w-1/8">IP<span class="ip-toggle" on:click={() =>toggleIP}>v4</span></th>
+                <th on:click={() =>sort(ip.k)} class="pointer hidden md:block md:w-1/8">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></th>
                 <th on:click={() =>sort("OS")} class="pointer hidden md:block md:w-1/12">OS</th>
                 <th on:click={() =>sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
                 <th class="hidden md:block md:w-1/12">Relay</th>
@@ -48,6 +48,7 @@
                     <!-- {#if p.IPs } -->
                     <ul>
                         <!-- {#each p.TailscaleIPs as ip} -->
+                        {#if ip.v === IP.v4}
                         <li class="pr-6">
                             <div class="flex relative min-w-0">
                                 <div class="truncate">
@@ -55,6 +56,7 @@
                                 </div>
                             </div>
                         </li>
+                        {:else}
                         <li class="pr-6">
                             <div class="flex relative min-w-0">
                                 <div class="truncate">
@@ -62,6 +64,7 @@
                                 </div>
                             </div>
                         </li>
+                        {/if}
                         <!-- {/each} -->
                     </ul>
                     <!-- {/if} -->
@@ -83,7 +86,7 @@
     </table>
 </div>
 
-<style>
+<style lang="scss">
 @import "../../../local.css";
 
 .pointer {
@@ -91,7 +94,8 @@
 }
 
 .ip-toggle {
-z-index: 100;
+    z-index: 100;
+    position: relative;
 }
 </style>
 
@@ -119,8 +123,32 @@ z-index: 100;
 
     dayjs.extend(relativeTime)
 
+    const IP = Object.freeze({
+        v4: Symbol("v4"),
+        v6: Symbol("v6autumn")
+    })
+
+    let ip = {
+        v: IP.v4,
+        k: "IPv4Num",
+        f: "v4",
+    }
+
     const toggleIP=e=> {
         console.log("toggling ip",e)
+        if (ip.v === IP.v4) {
+            ip = {
+                v: IP.v6,
+                k: "IPv6Num",
+                f: "v6",
+            }
+        } else {
+            ip = {
+                v: IP.v4,
+                k: "IPv4Num",
+                f: "v4",
+            }
+        }
     }
 
     const options: Intl.DateTimeFormatOptions = { 
@@ -169,12 +197,12 @@ z-index: 100;
     }
 
     $: sort = (column: string) => {
-        switch (column) {
-            case "IPv4":
-                break;
+       
+        //     case "IPv4":
+        //         break;
         
-            default:
-            // console.log("Sorting by %s", column)
+        //     default:
+            console.log("Sorting by %s", column)
             if (sortBy.col == column) {
                 sortBy.asc = !sortBy.asc
             } else {
@@ -185,6 +213,7 @@ z-index: 100;
             let sortModifier = (sortBy.asc) ? 1 : -1;
             
             sorter = (a: Peer, b: Peer) => {
+                // console.log ("column",column) 
                 let x:number | string, y:number | string
                 if (typeof a[column] === "number") {
                     x = a[column]
@@ -200,8 +229,8 @@ z-index: 100;
                 ? 1 * sortModifier 
                 : 0;
             }
-            break;
-        }
+            // break;
+        // }
 
 	}
     onMount(async() =>{
