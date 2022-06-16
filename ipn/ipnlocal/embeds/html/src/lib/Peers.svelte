@@ -6,7 +6,7 @@
             <tr class="w-full md:text-base">
                 <th on:click={() =>sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
                 <th on:click={() =>sort("HostName")} class="pointer md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
-                <th on:click={() =>sort(ip.k)} class="pointer hidden md:block md:w-1/8">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></th>
+                <th on:click={() =>sort(ip.k)} class="pointer hidden md:block md:w-1/12">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></th>
                 <th on:click={() =>sort("OS")} class="pointer hidden md:block md:w-1/12">OS</th>
                 <th on:click={() =>sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
                 <th class="hidden md:block md:w-1/12">Relay</th>
@@ -44,32 +44,32 @@
                     </div>
                     
                 </td>
-                <td class="hidden md:block md:w-1/8">
+                <td class="hidden md:block md:w-1/12 text-right">
                     <!-- {#if p.IPs } -->
                     <ul>
                         <!-- {#each p.TailscaleIPs as ip} -->
                         {#if ip.v === IP.v4}
                         <li class="pr-6">
-                            <div class="flex relative min-w-0">
-                                <div class="truncate">
-                                    <span class="text-right">{p.IPv4}</span>
+                            <!-- <div class="flex relative min-w-0"> -->
+                                <div class="truncate pr-6">
+                                    <div class="text-right">{p.IPv4}</div>
                                 </div>
-                            </div>
+                            <!-- </div> -->
                         </li>
                         {:else}
                         <li class="pr-6">
-                            <div class="flex relative min-w-0">
-                                <div class="truncate">
+                            <!-- <div class="flex relative min-w-0"> -->
+                                <div class="truncate pr-6">
                                     <span class="text-right">{p.IPv6}</span>
                                 </div>
-                            </div>
+                            <!-- </div> -->
                         </li>
                         {/if}
                         <!-- {/each} -->
                     </ul>
                     <!-- {/if} -->
                 </td>
-                <td class="hidden md:block md:w-1/12 ">{p.OS}</td>
+                <td class="hidden md:block md:w-1/12">{p.OS}</td>
                 <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", options)}">{ago(p.LastSeen, p.Unseen)}</td>
                 <td class="hidden md:block md:w-1/12">{p.Connection}</td>
                 <td on:click={()=>copy(p.DNSName)} class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td>
@@ -96,6 +96,10 @@
 .ip-toggle {
     z-index: 100;
     position: relative;
+    transition: color .3s;
+    &:hover {
+        color: rgb(112 110 109);
+    }
 }
 </style>
 
