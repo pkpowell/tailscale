@@ -14,6 +14,12 @@ const updatePeers = (p: Peer) => {
     peerMap.update(records => records.set(p.ID, p))
 }
 
+const setPeers = (p: Peer[]) => {
+    p.forEach(x=>{
+        peerMap.update(records => records.set(x.ID, x))
+    })
+}
+
 // const appendPeer =  (p: Peer) => {
 //     peers.update(current => {
 //         if (current === null ||  typeof current === "undefined") current = []
@@ -42,23 +48,29 @@ sse.onmessage = event => {
         switch (response.type) {
             case "ping":
 
-                break;
+            break;
 
             case "local":
                 // console.log("local", response.payload)
                 local.set(response.payload)
                 localReady.set(true)
-                break;
+            break;
                 
-                case "peer":
-                    // console.log("peer", response.payload)
+            case "peers":
+                    console.log("peers", response.payload)
+                    setPeers(response.payload)
+                    peersReady.set(true)
+            break;
+                
+            case "peer":
+                    console.log("peer", response.payload)
                     updatePeers(response.payload)
                     peersReady.set(true)
-                break;
+            break;
         
             default:
                 console.warn("unknown payload", response.payload)
-                break;
+            break;
         }
     // } else {
     //     console.warn("empty message", event)

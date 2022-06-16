@@ -53,13 +53,18 @@ interface Peer {
     OS: string;
     Created: Date;
     DNSName: string;
+    IPs: string[];
     TailscaleIPs: string[];
     IPv4: string;
     IPv6: string;
+    IPv4Num: string;
+    IPv6Num: string;
     RX: string;
     TX: string;
     RxBytes: number;
     TxBytes: number;
+    RXb: number;
+    TXb: number;
     Relay: string;
     Connection: string;
     ActAgo: string;

@@ -114,16 +114,12 @@ func RegisterNewSSHServer(fn newSSHServerFunc) {
 }
 
 type Broker struct {
-
 	// Events are pushed to this channel by the main events-gathering routine
 	Notifier chan []byte
-
 	// New client connections
 	newClients chan chan []byte
-
 	// Closed client connections
 	closingClients chan chan []byte
-
 	// Client connections registry
 	clients map[chan []byte]bool
 }
@@ -560,14 +556,14 @@ func (b *LocalBackend) populatePeerStatusLocked(sb *ipnstate.StatusBuilder) {
 			SSH_HostKeys:   p.Hostinfo.SSH_HostKeys().AsSlice(),
 		}
 
-		ps := sb.AddPeer(p.Key, peer)
+		sb.AddPeer(p.Key, peer)
 
-		event := Event[*ipnstate.PeerStatus]{
-			Type:      "peer",
-			Timestamp: time.Now().Format(time.RFC3339),
-			Payload:   ps,
-		}
-		b.broker.Notifier <- event.Marshal()
+		// event := Event[*ipnstate.PeerStatus]{
+		// 	Type:      "peer",
+		// 	Timestamp: time.Now().Format(time.RFC3339),
+		// 	Payload:   ps,
+		// }
+		// b.broker.Notifier <- event.Marshal()
 	}
 }
 
@@ -3523,14 +3519,19 @@ type statusData struct {
 func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	var ipv4 string
 	var ipv6 string
+	var ipv4Num string
+	var ipv6Num string
 	var connection string
 	var ActAgo string
 
 	for _, ip := range ps.TailscaleIPs {
 		if ip.Is6() {
 			ipv6 = ip.String()
+			ipv6Num = fmt.Sprintf("%x", ip.As16())
 		} else {
+			// fmt.Printf("ipv4 %+v", ip.As16())
 			ipv4 = ip.String()
+			ipv4Num = fmt.Sprintf("%x", ip.As16())
 		}
 	}
 
@@ -3562,6 +3563,8 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 		IPs:         ps.TailscaleIPs,
 		IPv4:        ipv4,
 		IPv6:        ipv6,
+		IPv4Num:     ipv4Num,
+		IPv6Num:     ipv6Num,
 		RX:          ipnstate.FormatBytes(ps.RxBytes, base),
 		TX:          ipnstate.FormatBytes(ps.TxBytes, base),
 		RXb:         ps.RxBytes,
@@ -3610,49 +3613,49 @@ func getLocalData(b *LocalBackend) *statusData {
 	return data
 }
 
-// func formatData(b *LocalBackend) *statusData {
-// 	var st = b.Status()
-// 	var data = &statusData{}
+func peerData(b *LocalBackend) []*ipnstate.PeerData {
+	var st = b.Status()
+	var data = &statusData{}
 
-// 	peers := make([]*ipnstate.PeerData, 0)
-// 	for _, peer := range st.Peers() {
-// 		ps := st.Peer[peer]
-// 		if ps.ShareeNode {
-// 			continue
-// 		}
-// 		peers = append(peers, getPeerData(ps))
-// 	}
+	peers := make([]*ipnstate.PeerData, 0)
+	for _, peer := range st.Peers() {
+		ps := st.Peer[peer]
+		if ps.ShareeNode {
+			continue
+		}
+		peers = append(peers, getPeerData(ps))
+	}
 
-// 	data.Peers = peers
-// 	// SortPeers(data.Peers)
+	data.Peers = peers
+	// SortPeers(data.Peers)
 
-// 	data.OS = b.hostinfo.OS
-// 	data.OSVersion = b.hostinfo.OSVersion
-// 	data.HostName = b.hostinfo.Hostname
-// 	data.Version = b.hostinfo.IPNVersion
-// 	data.Arch = b.hostinfo.GoArch
-// 	data.Services = b.hostinfo.Services
-// 	data.Name = b.netMap.Name
-// 	data.NodeKey = b.netMap.NodeKey.ShortString()
-// 	data.StableID = b.netMap.SelfNode.StableID
-// 	data.Created = b.netMap.SelfNode.Created.Format(time.RFC3339)
+	// data.OS = b.hostinfo.OS
+	// data.OSVersion = b.hostinfo.OSVersion
+	// data.HostName = b.hostinfo.Hostname
+	// data.Version = b.hostinfo.IPNVersion
+	// data.Arch = b.hostinfo.GoArch
+	// data.Services = b.hostinfo.Services
+	// data.Name = b.netMap.Name
+	// data.NodeKey = b.netMap.NodeKey.ShortString()
+	// data.StableID = b.netMap.SelfNode.StableID
+	// data.Created = b.netMap.SelfNode.Created.Format(time.RFC3339)
 
-// 	data.ServerURL = b.serverURL
-// 	data.Profile.LoginName = b.activeLogin
+	// data.ServerURL = b.serverURL
+	// data.Profile.LoginName = b.activeLogin
 
-// 	for _, ip := range b.netMap.SelfNode.Addresses {
-// 		if ip.IP().Is6() {
-// 			data.IPv6 = ip.IP().String()
-// 		} else {
-// 			data.IPv4 = ip.IP().String()
-// 		}
-// 	}
+	// for _, ip := range b.netMap.SelfNode.Addresses {
+	// 	if ip.IP().Is6() {
+	// 		data.IPv6 = ip.IP().String()
+	// 	} else {
+	// 		data.IPv4 = ip.IP().String()
+	// 	}
+	// }
 
-// 	return data
-// }
+	return peers
+}
 
 func (b *LocalBackend) NewSSEServer() {
-	// Instantiate a broker
+	// Instantiate broker
 	b.broker = &Broker{
 		Notifier:       make(chan []byte, 1),
 		newClients:     make(chan chan []byte),
@@ -3660,45 +3663,57 @@ func (b *LocalBackend) NewSSEServer() {
 		clients:        make(map[chan []byte]bool),
 	}
 
+	// start listening
 	go b.listenSSE()
+
+	// send pings...
 	// go b.ssePing(3)
-	// Each connection registers its own message channel with the Broker's connections registry
-	// b.messageChan = make(chan []byte)
 }
 
 func (b *LocalBackend) listenSSE() {
 	for {
 		select {
-		case s := <-b.broker.newClients:
-			// new client
-			b.broker.clients[s] = true
-			log.Printf("Client added. %d registered clients", len(b.broker.clients))
+		// new client
+		//
+		case newClient := <-b.broker.newClients:
+			log.Printf("Adding new client. %v", newClient)
+			log.Printf("%d registered clients", len(b.broker.clients))
+			b.broker.clients[newClient] = true
 
+			// send first batch of data
 			go func() {
-				e := Event[*statusData]{
+				evst := Event[*statusData]{
 					Type:    "local",
 					Payload: getLocalData(b),
 				}
-				s <- e.Marshal()
+				newClient <- evst.Marshal()
+
+				evpd := Event[[]*ipnstate.PeerData]{
+					Type:    "peers",
+					Payload: peerData(b),
+				}
+				newClient <- evpd.Marshal()
 			}()
 
-		case s := <-b.broker.closingClients:
-			// remove client.
-			delete(b.broker.clients, s)
-			log.Printf("Removed client. %d registered clients", len(b.broker.clients))
+		// remove client.
+		//
+		case closingClient := <-b.broker.closingClients:
+			log.Printf("Removing client. %v", closingClient)
+			log.Printf("%d registered clients", len(b.broker.clients))
+			delete(b.broker.clients, closingClient)
 
+		// broadcast event to all clients
+		//
 		case event := <-b.broker.Notifier:
 			if len(b.broker.clients) > 0 {
-				// broadcast event to all clients
-				log.Printf("broadcast event to %d clients", len(b.broker.clients))
-				for clientMessageChan := range b.broker.clients {
-					log.Printf("sending event to %v", clientMessageChan)
-					clientMessageChan <- event
+				log.Printf("broadcasting event to %d clients", len(b.broker.clients))
+				for client := range b.broker.clients {
+					log.Printf("%v", client)
+					client <- event
 				}
 			}
 		}
 	}
-
 }
 
 func (b *LocalBackend) handleQuad100Port80SSE(w http.ResponseWriter, r *http.Request) {
@@ -3759,7 +3774,7 @@ func (b *LocalBackend) ssePing(s time.Duration) {
 type ping struct{}
 
 type payload interface {
-	*ipnstate.PeerData | *ipnstate.PeerStatus | *ping | *statusData
+	[]*ipnstate.PeerData | *ipnstate.PeerStatus | *ping | *statusData
 }
 
 type Event[T payload] struct {

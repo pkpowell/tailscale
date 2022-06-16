@@ -6,7 +6,7 @@
             <tr class="w-full md:text-base">
                 <th on:click={() =>sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
                 <th on:click={() =>sort("HostName")} class="pointer md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
-                <th on:click={() =>sort("IPv4")} class="pointer hidden md:block md:w-1/8">IP</th>
+                <th on:click={() =>sort("IPv4Num")} class="pointer hidden md:block md:w-1/8">IP</th>
                 <th on:click={() =>sort("OS")} class="pointer hidden md:block md:w-1/12">OS</th>
                 <th on:click={() =>sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
                 <th class="hidden md:block md:w-1/12">Relay</th>
@@ -45,26 +45,33 @@
                     
                 </td>
                 <td class="hidden md:block md:w-1/8">
-                    {#if p.TailscaleIPs }
+                    <!-- {#if p.IPs } -->
                     <ul>
-                        {#each p.TailscaleIPs as ip}
-                        <li on:click={()=>copy(ip)} class="pr-6">
+                        <!-- {#each p.TailscaleIPs as ip} -->
+                        <li class="pr-6">
                             <div class="flex relative min-w-0">
                                 <div class="truncate">
-                                    <span>{ip}</span>
+                                    <span class="text-right">{p.IPv4}</span>
                                 </div>
                             </div>
                         </li>
-                        {/each}
+                        <li class="pr-6">
+                            <div class="flex relative min-w-0">
+                                <div class="truncate">
+                                    <span class="text-right">{p.IPv6}</span>
+                                </div>
+                            </div>
+                        </li>
+                        <!-- {/each} -->
                     </ul>
-                    {/if}
+                    <!-- {/if} -->
                 </td>
                 <td class="hidden md:block md:w-1/12 ">{p.OS}</td>
                 <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", options)}">{ago(p.LastSeen, p.Unseen)}</td>
-                <td class="hidden md:block md:w-1/12">{p.Relay}</td>
+                <td class="hidden md:block md:w-1/12">{p.Connection}</td>
                 <td on:click={()=>copy(p.DNSName)} class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td>
-                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RxBytes)}</td>
-                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TxBytes)}</td>
+                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RXb)}</td>
+                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TXb)}</td>
                 <td class="hidden md:block md:w-1/12 text-right"><span>
                     <div>{new Date(p.Created).toLocaleDateString("en-US", options)}</div>
                     <!-- <div>{p.CreatedTime}</div> -->

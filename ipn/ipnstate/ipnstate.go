@@ -389,6 +389,8 @@ type PeerData struct {
 	IPs         []netaddr.IP         `json:"IPs"`
 	IPv4        string               `json:"IPv4"`
 	IPv6        string               `json:"IPv6"`
+	IPv4Num     string               `json:"IPv4Num"`
+	IPv6Num     string               `json:"IPv6Num"`
 	Peer        string               `json:"Peer"`
 	ActAgo      string               `json:"ActAgo"`
 	LastSeen    string               `json:"LastSeen"`
