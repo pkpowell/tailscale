@@ -6,13 +6,13 @@
             <tr class="w-full md:text-base">
                 <th on:click={() =>sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
                 <th on:click={() =>sort("HostName")} class="pointer md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
-                <th on:click={() =>sort("IPv4Num")} class="pointer hidden md:block md:w-1/8">IP</th>
+                <th on:click={() =>sort("IPv4Num")} class="pointer hidden md:block md:w-1/8">IP<span class="ip-toggle" on:click={() =>toggleIP}>v4</span></th>
                 <th on:click={() =>sort("OS")} class="pointer hidden md:block md:w-1/12">OS</th>
                 <th on:click={() =>sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
                 <th class="hidden md:block md:w-1/12">Relay</th>
                 <th on:click={() =>sort("DNSName")} class="pointer hidden md:block md:w-1/8">DNS</th>
-                <th on:click={() =>sort("RX")} class="pointer hidden md:block md:w-1/12 text-right">rx</th>
-                <th on:click={() =>sort("TX")} class="pointer hidden md:block md:w-1/12 text-right">tx</th>
+                <th on:click={() =>sort("RXb")} class="pointer hidden md:block md:w-1/12 text-right">rx</th>
+                <th on:click={() =>sort("TXb")} class="pointer hidden md:block md:w-1/12 text-right">tx</th>
                 <th on:click={() =>sort("Created")} class="pointer hidden md:block md:w-1/12 text-right">Created</th>
             </tr>
         </thead>
@@ -89,6 +89,10 @@
 .pointer {
     cursor: pointer;
 }
+
+.ip-toggle {
+z-index: 100;
+}
 </style>
 
 <script lang="ts">
@@ -115,6 +119,10 @@
 
     dayjs.extend(relativeTime)
 
+    const toggleIP=e=> {
+        console.log("toggling ip",e)
+    }
+
     const options: Intl.DateTimeFormatOptions = { 
         // weekday: 'short', 
         year: 'numeric', 
@@ -125,6 +133,7 @@
     let sorter: (a: Peer, b: Peer) => number
 
     $: peers = () => {
+        // hash to array
         let p = [...$peerMap.entries()].map(x=>x[1])
         // console.log("peers", p)
         return p.sort(sorter)
@@ -176,8 +185,15 @@
             let sortModifier = (sortBy.asc) ? 1 : -1;
             
             sorter = (a: Peer, b: Peer) => {
-                let x = a[column].toLowerCase()
-                let y = b[column].toLowerCase()
+                let x:number | string, y:number | string
+                if (typeof a[column] === "number") {
+                    x = a[column]
+                    y = b[column]
+                } else {
+                    x = a[column].toLowerCase()
+                    y = b[column].toLowerCase()
+                }
+
                 return (x < y) 
                 ? -1 * sortModifier 
                 : (x > y) 
