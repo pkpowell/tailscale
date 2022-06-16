@@ -5,7 +5,7 @@
         <thead class="stick opaque py-2">
             <tr class="w-full md:text-base">
                 <th on:click={() =>sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
-                <th on:click={() =>sort("HostName")} class="pointer md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
+                <th on:click={() =>sort("HostName")} class="pointer md:w-1/12 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
                 <th on:click={() =>sort(ip.k)} class="pointer hidden md:block md:w-1/12">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></th>
                 <th on:click={() =>sort("OS")} class="pointer hidden md:block md:w-1/12">OS</th>
                 <th on:click={() =>sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
@@ -34,7 +34,7 @@
                     </div>
                     
                 </td>
-                <td class="md:w-1/8 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">
+                <td class="md:w-1/12 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">
                     <div class="relative">
                         <div class="items-center text-gray-900">
                             <h3 class="font-semibold hover:text-blue-500">
@@ -44,7 +44,7 @@
                     </div>
                     
                 </td>
-                <td class="hidden md:block md:w-1/12 text-right">
+                <td class="hidden md:block md:w-1/12">
                     <!-- {#if p.IPs } -->
                     <ul>
                         <!-- {#each p.TailscaleIPs as ip} -->
@@ -52,7 +52,7 @@
                         <li class="pr-6">
                             <!-- <div class="flex relative min-w-0"> -->
                                 <div class="truncate pr-6">
-                                    <div class="text-right">{p.IPv4}</div>
+                                    <div class="">{p.IPv4}</div>
                                 </div>
                             <!-- </div> -->
                         </li>
@@ -60,7 +60,7 @@
                         <li class="pr-6">
                             <!-- <div class="flex relative min-w-0"> -->
                                 <div class="truncate pr-6">
-                                    <span class="text-right">{p.IPv6}</span>
+                                    <span class="">{p.IPv6}</span>
                                 </div>
                             <!-- </div> -->
                         </li>
