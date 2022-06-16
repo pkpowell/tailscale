@@ -3661,7 +3661,7 @@ func (b *LocalBackend) NewSSEServer() {
 	}
 
 	go b.listenSSE()
-	go b.ssePing(3)
+	// go b.ssePing(3)
 	// Each connection registers its own message channel with the Broker's connections registry
 	// b.messageChan = make(chan []byte)
 }
