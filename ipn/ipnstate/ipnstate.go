@@ -481,8 +481,6 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 		data.Peers[i].RX = FormatBytes(ps.RxBytes, Base2)
 		data.Peers[i].TX = FormatBytes(ps.TxBytes, Base2)
 
-		// data.Peers[i].TailAddr = data.Peers[i].IPs
-
 		if ps.Active {
 			if ps.Relay != "" && ps.CurAddr == "" {
 				data.Peers[i].Connection = html.EscapeString(ps.Relay)
