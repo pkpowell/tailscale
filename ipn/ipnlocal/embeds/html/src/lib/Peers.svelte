@@ -17,7 +17,7 @@
                 <th on:click={() =>sort("DNSName")} class="pointer hidden md:block md:w-1/8">DNS</th>
                 <th on:click={() =>sort("RXb")} class="pointer hidden md:block md:w-1/12 text-right">rx</th>
                 <th on:click={() =>sort("TXb")} class="pointer hidden md:block md:w-1/12 text-right">tx</th>
-                <th on:click={() =>sort("Created")} class="pointer hidden md:block md:w-1/12 text-right">Created</th>
+                <!-- <th on:click={() =>sort("Created")} class="pointer hidden md:block md:w-1/12 text-right">Created</th> -->
             </tr>
         </thead>
 
@@ -49,29 +49,21 @@
                     
                 </td>
                 <td class="hidden md:block md:w-1/12">
-                    <!-- {#if p.IPs } -->
                     <ul>
-                        <!-- {#each p.TailscaleIPs as ip} -->
                         {#if ip.v === IP.v4}
                         <li class="pr-6">
-                            <!-- <div class="flex relative min-w-0"> -->
-                                <div class="truncate pr-6">
-                                    <div class="">{p.IPv4}</div>
-                                </div>
-                            <!-- </div> -->
+                            <div class="truncate pr-6">
+                                <div class="">{p.IPv4}</div>
+                            </div>
                         </li>
                         {:else}
                         <li class="pr-6">
-                            <!-- <div class="flex relative min-w-0"> -->
-                                <div class="truncate pr-6">
-                                    <span class="">{p.IPv6}</span>
-                                </div>
-                            <!-- </div> -->
+                            <div class="truncate pr-6">
+                                <span class="">{p.IPv6}</span>
+                            </div>
                         </li>
                         {/if}
-                        <!-- {/each} -->
                     </ul>
-                    <!-- {/if} -->
                 </td>
                 <td class="hidden md:block md:w-1/12">{p.OS}</td>
                 <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", options)}">{ago(p.LastSeen, p.Unseen)}</td>
@@ -79,10 +71,9 @@
                 <td on:click={()=>copy(p.DNSName)} class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td>
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RXb)}</td>
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TXb)}</td>
-                <td class="hidden md:block md:w-1/12 text-right"><span>
-                    <div>{new Date(p.Created).toLocaleDateString("en-US", options)}</div>
-                    <!-- <div>{p.CreatedTime}</div> -->
-                </span></td>
+                <!-- <td class="hidden md:block md:w-1/12 text-right">
+                    <span>{new Date(p.Created).toLocaleDateString("en-US", options)}</span>
+                </td> -->
             </tr>
             {/each}
             {/if}
@@ -131,7 +122,7 @@
 
     dayjs.extend(relativeTime)
 
-    export let value = ""
+    let value: string = ""
 
     const IP = Object.freeze({
         v4: Symbol("v4"),
@@ -178,11 +169,9 @@
             let hit = false
             for (let k of filterKeys) {
                 if (o[k].includes(value)) hit = true
-                console.log("o[key]",  o[k], value, hit)
             }
             return hit
         })
-        // console.log("peers", p)
         return p.sort(sorter)
     }
 

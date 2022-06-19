@@ -57,13 +57,13 @@ sse.onmessage = event => {
             break;
                 
             case "peers":
-                    console.log("peers", response.payload)
+                    // console.log("peers", response.payload)
                     setPeers(response.payload)
                     peersReady.set(true)
             break;
                 
             case "peer":
-                    console.log("peer", response.payload)
+                    // console.log("peer", response.payload)
                     updatePeers(response.payload)
                     peersReady.set(true)
             break;
