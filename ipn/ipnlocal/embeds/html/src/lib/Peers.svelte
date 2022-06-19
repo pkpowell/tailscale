@@ -1,6 +1,10 @@
 
 <div class="peers">
     <div class="py-8 text-3xl font-semibold tracking-tight leading-tight">Peers</div>
+    <input
+        placeholder="Search..."
+        bind:value ={value}
+    >
     <table class="tb">
         <thead class="stick opaque py-2">
             <tr class="w-full md:text-base">
@@ -127,6 +131,8 @@
 
     dayjs.extend(relativeTime)
 
+    export let value = ""
+
     const IP = Object.freeze({
         v4: Symbol("v4"),
         v6: Symbol("v6autumn")
@@ -155,6 +161,8 @@
         }
     }
 
+    const filterKeys = ["HostName", "IPv4", "IPv6", "DNSName", "OS", "ID"]
+
     const options: Intl.DateTimeFormatOptions = { 
         // weekday: 'short', 
         year: 'numeric', 
@@ -166,7 +174,14 @@
 
     $: peers = () => {
         // hash to array
-        let p = [...$peerMap.entries()].map(x=>x[1])
+        let p = [...$peerMap.entries()].map(x=>x[1]).filter(o=>{
+            let hit = false
+            for (let k of filterKeys) {
+                if (o[k].includes(value)) hit = true
+                console.log("o[key]",  o[k], value, hit)
+            }
+            return hit
+        })
         // console.log("peers", p)
         return p.sort(sorter)
     }
