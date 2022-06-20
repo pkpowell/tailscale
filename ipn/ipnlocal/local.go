@@ -170,8 +170,9 @@ type LocalBackend struct {
 	sshServer      SSHServer    // or nil, initialized lazily.
 	notify         func(ipn.Notify)
 	cc             controlclient.Client
-	stateKey       ipn.StateKey // computed in part from user-provided value
-	userID         string       // current controlling user ID (for Windows, primarily)
+	ccAuto         *controlclient.Auto // if cc is of type *controlclient.Auto
+	stateKey       ipn.StateKey        // computed in part from user-provided value
+	userID         string              // current controlling user ID (for Windows, primarily)
 	prefs          *ipn.Prefs
 	inServerMode   bool
 	machinePrivKey key.MachinePrivate
@@ -851,7 +852,7 @@ func (b *LocalBackend) setWgengineStatus(s *wgengine.Status, err error) {
 
 	if cc != nil {
 		if needUpdateEndpoints {
-			cc.UpdateEndpoints(0, s.LocalAddrs)
+			cc.UpdateEndpoints(s.LocalAddrs)
 		}
 		b.stateMachine()
 	}
@@ -1110,6 +1111,7 @@ func (b *LocalBackend) Start(opts ipn.Options) error {
 		Pinger:               b,
 		PopBrowserURL:        b.tellClientToBrowseToURL,
 		Dialer:               b.Dialer(),
+		Status:               b.setClientStatus,
 
 		// Don't warn about broken Linux IP forwarding when
 		// netstack is being used.
@@ -1121,14 +1123,14 @@ func (b *LocalBackend) Start(opts ipn.Options) error {
 
 	b.mu.Lock()
 	b.cc = cc
+	b.ccAuto, _ = cc.(*controlclient.Auto)
 	endpoints := b.endpoints
 	b.mu.Unlock()
 
 	if endpoints != nil {
-		cc.UpdateEndpoints(0, endpoints)
+		cc.UpdateEndpoints(endpoints)
 	}
 
-	cc.SetStatusFunc(b.setClientStatus)
 	b.e.SetNetInfoCallback(b.setNetInfo)
 
 	b.mu.Lock()
@@ -3254,7 +3256,7 @@ func (b *LocalBackend) SetDNS(ctx context.Context, name, value string) error {
 	}
 
 	b.mu.Lock()
-	cc := b.cc
+	cc := b.ccAuto
 	if prefs := b.prefs; prefs != nil {
 		req.NodeKey = prefs.Persist.PrivateNodeKey.Public()
 	}
@@ -3422,7 +3424,13 @@ func (b *LocalBackend) allowExitNodeDNSProxyToServeName(name string) bool {
 // If t is in the past, the key is expired immediately.
 // If t is after the current expiry, an error is returned.
 func (b *LocalBackend) SetExpirySooner(ctx context.Context, expiry time.Time) error {
-	return b.cc.SetExpirySooner(ctx, expiry)
+	b.mu.Lock()
+	cc := b.ccAuto
+	b.mu.Unlock()
+	if cc == nil {
+		return errors.New("not running")
+	}
+	return cc.SetExpirySooner(ctx, expiry)
 }
 
 // exitNodeCanProxyDNS reports the DoH base URL ("http://foo/dns-query") without query parameters
@@ -3482,7 +3490,7 @@ func (b *LocalBackend) magicConn() (*magicsock.Conn, error) {
 // Noise connection.
 func (b *LocalBackend) DoNoiseRequest(req *http.Request) (*http.Response, error) {
 	b.mu.Lock()
-	cc := b.cc
+	cc := b.ccAuto
 	b.mu.Unlock()
 	if cc == nil {
 		return nil, errors.New("no client")
