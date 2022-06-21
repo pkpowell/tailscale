@@ -3,7 +3,7 @@
     <div class="py-8 text-3xl font-semibold tracking-tight leading-tight">Peers</div>
     <input
         placeholder="Search..."
-        bind:value ={value}
+        bind:value ={searchTerm}
     >
     <table class="tb">
         <thead class="stick opaque py-2">
@@ -11,10 +11,10 @@
                 <th on:click={() =>sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
                 <th on:click={() =>sort("HostName")} class="pointer md:w-1/12 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
                 <th on:click={() =>sort(ip.k)} class="pointer hidden md:block md:w-1/12">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></th>
-                <th on:click={() =>sort("OS")} class="pointer hidden md:block md:w-1/12">OS</th>
+                <!-- <th on:click={() =>sort("OS")} class="pointer hidden md:block md:w-1/12">OS</th> -->
                 <th on:click={() =>sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
-                <th class="hidden md:block md:w-1/12">Relay</th>
-                <th on:click={() =>sort("DNSName")} class="pointer hidden md:block md:w-1/8">DNS</th>
+                <!-- <th class="hidden md:block md:w-1/12">Relay</th> -->
+                <!-- <th on:click={() =>sort("DNSName")} class="pointer hidden md:block md:w-1/8">DNS</th> -->
                 <th on:click={() =>sort("RXb")} class="pointer hidden md:block md:w-1/12 text-right">rx</th>
                 <th on:click={() =>sort("TXb")} class="pointer hidden md:block md:w-1/12 text-right">tx</th>
                 <!-- <th on:click={() =>sort("Created")} class="pointer hidden md:block md:w-1/12 text-right">Created</th> -->
@@ -65,16 +65,14 @@
                         {/if}
                     </ul>
                 </td>
-                <td class="hidden md:block md:w-1/12">{p.OS}</td>
+                <!-- <td class="hidden md:block md:w-1/12">{p.OS}</td> -->
                 <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", options)}">{ago(p.LastSeen, p.Unseen)}</td>
-                <td class="hidden md:block md:w-1/12">{p.Connection}</td>
-                <td on:click={()=>copy(p.DNSName)} class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td>
+                <!-- <td class="hidden md:block md:w-1/12">{p.Connection}</td> -->
+                <!-- <td on:click={()=>copy(p.DNSName)} class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td> -->
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RXb)}</td>
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TXb)}</td>
-                <!-- <td class="hidden md:block md:w-1/12 text-right">
-                    <span>{new Date(p.Created).toLocaleDateString("en-US", options)}</span>
-                </td> -->
             </tr>
+            <div>more stuff...</div>
             {/each}
             {/if}
         </tbody>
@@ -119,14 +117,13 @@
     import { FormatBytes } from "../js/lib"
     import dayjs from 'dayjs'
     import relativeTime from 'dayjs/plugin/relativeTime'
-
     dayjs.extend(relativeTime)
 
-    let value: string = ""
+    let searchTerm: string = ""
 
     const IP = Object.freeze({
         v4: Symbol("v4"),
-        v6: Symbol("v6autumn")
+        v6: Symbol("v6")
     })
 
     let ip = {
@@ -168,7 +165,7 @@
         let p = [...$peerMap.entries()].map(x=>x[1]).filter(o=>{
             let hit = false
             for (let k of filterKeys) {
-                if (o[k].includes(value)) hit = true
+                if (o[k].includes(searchTerm)) hit = true
             }
             return hit
         })
