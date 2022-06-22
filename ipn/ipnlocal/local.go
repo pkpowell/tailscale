@@ -67,6 +67,8 @@ import (
 	"tailscale.com/wgengine/wgcfg/nmcfg"
 )
 
+//go:generate npm --prefix embeds/html run build
+
 //go:embed embeds/html/dist
 var embeds embed.FS
 
