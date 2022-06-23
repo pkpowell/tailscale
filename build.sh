@@ -1,5 +1,11 @@
 #!/usr/bin/env sh
 
+if ! command -v npm &> /dev/null
+then
+    echo "npm not found. Please install nodejs"
+    exit 1
+fi
+
 npm --prefix ipn/ipnlocal/embeds/html i > /dev/null && {
     echo "npm install ok"
 } || {

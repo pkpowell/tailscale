@@ -49,6 +49,7 @@ interface Profile {
 interface Peer {
     HostName: string;
     ID: string;
+    UserID: string;
     NodeKey: string;
     OS: string;
     Created: Date;

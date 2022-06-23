@@ -3,7 +3,7 @@
         {#if $localReady}
         <div class="flex py-8">
 
-            <img src={logo} alt="Svelte Logo" class="w-8 pr-3"/>
+            <img src={logo} alt="TS Logo" class="w-8 pr-3"/>
 
             <div class="flex items-center space-x-2 ">
                 <div class="text-right truncate leading-4">
@@ -17,7 +17,7 @@
             <div class="border border-gray-200 bg-gray-0 rounded-lg flex items-center justify-between">
                 <div class="flex items-center min-width-0">
 
-                    <img src={device} alt="Svelte Logo" class="w-8 pr-3"/>
+                    <img src={device} alt="Device Logo" class="w-8 pr-3"/>
 
                     <div class="truncate mr-2">
                         <div class="">

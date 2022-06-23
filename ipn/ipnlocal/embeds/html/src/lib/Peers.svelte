@@ -26,7 +26,7 @@
             {#if $peersReady}
             {#each peers() as p}
 
-            <tr on:click={show} id={p.ID} class="table-row w-full px-0.5 hover:bg-gray-0">
+            <tr on:click={() =>toggleDetails(parseInt(p.ID))} class="table-row w-full px-0.5 hover:bg-gray-0">
                 <td class="w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">
                     <div class="relative">
                         <div class="flex items-center text-gray-600 text-sm">
@@ -35,7 +35,6 @@
                             </span>
                         </div>
                     </div>
-                    
                 </td>
                 <td class="md:w-1/12 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">
                     <div class="relative">
@@ -65,16 +64,38 @@
                     </ul>
                 </td>
                 <!-- <td class="hidden md:block md:w-1/12">{p.OS}</td> -->
-                <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", options)}">{ago(p.LastSeen, p.Unseen)}</td>
+                <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", date)}">{ago(p.LastSeen, p.Unseen)}</td>
                 <!-- <td class="hidden md:block md:w-1/12">{p.Connection}</td> -->
                 <!-- <td on:click={()=>copy(p.DNSName)} class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td> -->
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RXb)}</td>
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TXb)}</td>
             </tr>
+
             <div style="height:{visible[p.ID] ? '100%' : '0'}" class="details">
-                more stuff...
-                {p.DNSName}
-                {p.OS}
+                <div class="keyval text-sm">
+                    <span class="key md:w-1/12">DNS</span>
+                    <span class="val md:w-1/3">{p.DNSName}</span>
+                </div>
+                <div class="keyval text-sm">
+                    <span class="key md:w-1/12">OS</span>
+                    <span class="val md:w-1/3">{p.OS}</span>
+                </div>
+                <div class="keyval text-sm">
+                    <span class="key md:w-1/12">Relay</span>
+                    <span class="val md:w-1/3">{p.Connection}</span>
+                </div>
+                <div class="keyval text-sm">
+                    <span class="key md:w-1/12">Created</span>
+                    <span class="val md:w-1/3">{new Date(p.Created).toLocaleDateString("en-US", date)}</span>
+                </div>
+                <div class="keyval text-sm">
+                    <span class="key md:w-1/12">Node Key</span>
+                    <span class="val md:w-1/3">{p.NodeKey}</span>
+                </div>
+                <div class="keyval text-sm">
+                    <span class="key md:w-1/12">Last seen</span>
+                    <span class="val md:w-1/3">{new Date(p.LastSeen).toLocaleDateString("en-US", dateTime)}</span>
+                </div>
             </div>
             {/each}
             {/if}
@@ -86,8 +107,12 @@
 @import "../../../local.css";
 .details {
     height: 0;
+    // max-height: 0;
     overflow: hidden;
-    transition: height .3s;
+    // transition: height .3s;
+    padding-left: 32px;
+    // margin-top: 32px;
+    // margin-bottom: 32px;
 }
 .pointer {
     cursor: pointer;
@@ -130,9 +155,8 @@
 
     let visible = {  }
 
-    const show = e => {
-        console.log(e.target)
-        visible[e.target.id] = !visible[e.target.id]
+    const toggleDetails = (id:number) => {
+        visible[id] = !visible[id]
     }
 
     const IP = Object.freeze({
@@ -165,11 +189,19 @@
 
     const filterKeys = ["HostName", "IPv4", "IPv6", "DNSName", "OS", "ID"]
 
-    const options: Intl.DateTimeFormatOptions = { 
+    const date: Intl.DateTimeFormatOptions = { 
         // weekday: 'short', 
         year: 'numeric', 
         month: 'short', 
         day: 'numeric' 
+    }
+    const dateTime: Intl.DateTimeFormatOptions = { 
+        // weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
     }
 
     let sorter: (a: Peer, b: Peer) => number

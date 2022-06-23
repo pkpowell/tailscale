@@ -404,7 +404,8 @@ type PeerData struct {
 	HostName    string               `json:"HostName"`
 	HostInfo    tailcfg.Hostinfo     `json:"HostInfo"`
 	ID          tailcfg.StableNodeID `json:"ID"`
-	NodeKey     key.NodePublic       `json:"NodeKey"`
+	UserID      tailcfg.UserID       `json:"UserID"`
+	NodeKey     string               `json:"NodeKey"`
 	Owner       string               `json:"Owner"`
 	DNSName     string               `json:"DNSName"`
 	TailAddr    []net.IPAddr         `json:"TailAddr"`

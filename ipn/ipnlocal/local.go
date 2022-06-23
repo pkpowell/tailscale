@@ -3616,7 +3616,8 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	return &ipnstate.PeerData{
 		HostName:    ps.HostName,
 		ID:          ps.ID,
-		NodeKey:     ps.PublicKey,
+		NodeKey:     ps.PublicKey.ShortString(),
+		UserID:      ps.UserID,
 		OS:          ps.OS,
 		Created:     ps.Created,
 		CreatedDate: ps.Created.Format("_2 Jan 2006"),
@@ -3675,11 +3676,10 @@ func getLocalData(b *LocalBackend) *statusData {
 	return data
 }
 
-func peerData(b *LocalBackend) []*ipnstate.PeerData {
+func peerData(b *LocalBackend) (peers []*ipnstate.PeerData) {
 	var st = b.Status()
-	var data = &statusData{}
 
-	peers := make([]*ipnstate.PeerData, 0)
+	peers = make([]*ipnstate.PeerData, 0)
 	for _, peer := range st.Peers() {
 		ps := st.Peer[peer]
 		if ps.ShareeNode {
@@ -3688,32 +3688,7 @@ func peerData(b *LocalBackend) []*ipnstate.PeerData {
 		peers = append(peers, getPeerData(ps))
 	}
 
-	data.Peers = peers
-	// SortPeers(data.Peers)
-
-	// data.OS = b.hostinfo.OS
-	// data.OSVersion = b.hostinfo.OSVersion
-	// data.HostName = b.hostinfo.Hostname
-	// data.Version = b.hostinfo.IPNVersion
-	// data.Arch = b.hostinfo.GoArch
-	// data.Services = b.hostinfo.Services
-	// data.Name = b.netMap.Name
-	// data.NodeKey = b.netMap.NodeKey.ShortString()
-	// data.StableID = b.netMap.SelfNode.StableID
-	// data.Created = b.netMap.SelfNode.Created.Format(time.RFC3339)
-
-	// data.ServerURL = b.serverURL
-	// data.Profile.LoginName = b.activeLogin
-
-	// for _, ip := range b.netMap.SelfNode.Addresses {
-	// 	if ip.IP().Is6() {
-	// 		data.IPv6 = ip.IP().String()
-	// 	} else {
-	// 		data.IPv4 = ip.IP().String()
-	// 	}
-	// }
-
-	return peers
+	return
 }
 
 func (b *LocalBackend) NewSSEServer() {
@@ -3744,17 +3719,17 @@ func (b *LocalBackend) listenSSE() {
 
 			// send first batch of data
 			go func() {
-				evst := Event[*statusData]{
+				est := Event[*statusData]{
 					Type:    "local",
 					Payload: getLocalData(b),
 				}
-				newClient <- evst.Marshal()
+				newClient <- est.Marshal()
 
-				evpd := Event[[]*ipnstate.PeerData]{
+				epd := Event[[]*ipnstate.PeerData]{
 					Type:    "peers",
 					Payload: peerData(b),
 				}
-				newClient <- evpd.Marshal()
+				newClient <- epd.Marshal()
 			}()
 
 		// remove client.
