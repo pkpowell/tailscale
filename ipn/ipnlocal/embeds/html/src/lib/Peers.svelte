@@ -8,16 +8,12 @@
     <table class="tb">
         <thead class="stick opaque py-2">
             <tr class="w-full md:text-base">
-                <th on:click={() =>sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
-                <th on:click={() =>sort("HostName")} class="pointer md:w-1/12 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
-                <th on:click={() =>sort(ip.k)} class="pointer hidden md:block md:w-1/12">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></th>
-                <!-- <th on:click={() =>sort("OS")} class="pointer hidden md:block md:w-1/12">OS</th> -->
-                <th on:click={() =>sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
-                <!-- <th class="hidden md:block md:w-1/12">Relay</th> -->
-                <!-- <th on:click={() =>sort("DNSName")} class="pointer hidden md:block md:w-1/8">DNS</th> -->
-                <th on:click={() =>sort("RXb")} class="pointer hidden md:block md:w-1/12 text-right">rx</th>
-                <th on:click={() =>sort("TXb")} class="pointer hidden md:block md:w-1/12 text-right">tx</th>
-                <!-- <th on:click={() =>sort("Created")} class="pointer hidden md:block md:w-1/12 text-right">Created</th> -->
+                <th on:click={() => sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
+                <th on:click={() => sort("HostName")} class="pointer md:w-1/12 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
+                <th on:click={() => sort(ip.k)} class="pointer hidden md:block md:w-1/12">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></th>
+                <th on:click={() => sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
+                <th on:click={() => sort("RXb")} class="pointer hidden md:block md:w-1/12 text-right">rx</th>
+                <th on:click={() => sort("TXb")} class="pointer hidden md:block md:w-1/12 text-right">tx</th>
             </tr>
         </thead>
 
@@ -26,7 +22,7 @@
             {#if $peersReady}
             {#each peers() as p}
 
-            <tr on:click={() =>toggleDetails(parseInt(p.ID))} class="table-row w-full px-0.5 hover:bg-gray-0">
+            <tr on:click={() => toggleDetails(parseInt(p.ID))} class="table-row w-full px-0.5 hover:bg-gray-0">
                 <td class="w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">
                     <div class="relative">
                         <div class="flex items-center text-gray-600 text-sm">
@@ -63,10 +59,7 @@
                         {/if}
                     </ul>
                 </td>
-                <!-- <td class="hidden md:block md:w-1/12">{p.OS}</td> -->
-                <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", date)}">{ago(p.LastSeen, p.Unseen)}</td>
-                <!-- <td class="hidden md:block md:w-1/12">{p.Connection}</td> -->
-                <!-- <td on:click={()=>copy(p.DNSName)} class="hidden md:block md:w-1/8 truncate">{p.DNSName}</td> -->
+                <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", dateShort)}">{ago(p.LastSeen, p.Unseen)}</td>
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RXb)}</td>
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TXb)}</td>
             </tr>
@@ -86,7 +79,7 @@
                 </div>
                 <div class="keyval text-sm">
                     <span class="key md:w-1/12">Created</span>
-                    <span class="val md:w-1/3">{new Date(p.Created).toLocaleDateString("en-US", date)}</span>
+                    <span class="val md:w-1/3">{new Date(p.Created).toLocaleDateString("en-US", dateShort)}</span>
                 </div>
                 <div class="keyval text-sm">
                     <span class="key md:w-1/12">Node Key</span>
@@ -107,13 +100,10 @@
 @import "../../../local.css";
 .details {
     height: 0;
-    // max-height: 0;
     overflow: hidden;
-    // transition: height .3s;
     padding-left: 32px;
-    // margin-top: 32px;
-    // margin-bottom: 32px;
 }
+
 .pointer {
     cursor: pointer;
 }
@@ -151,9 +141,9 @@
     import relativeTime from 'dayjs/plugin/relativeTime'
     dayjs.extend(relativeTime)
 
-    let searchTerm: string = ""
+    let searchTerm:string = ""
 
-    let visible = {  }
+    let visible = {}
 
     const toggleDetails = (id:number) => {
         visible[id] = !visible[id]
@@ -170,7 +160,7 @@
         f: "v4",
     }
 
-    const toggleIP=e=> {
+    const toggleIP = (e:any) => {
         console.log("toggling ip",e)
         if (ip.v === IP.v4) {
             ip = {
@@ -189,14 +179,13 @@
 
     const filterKeys = ["HostName", "IPv4", "IPv6", "DNSName", "OS", "ID"]
 
-    const date: Intl.DateTimeFormatOptions = { 
+    const dateShort: Intl.DateTimeFormatOptions = { 
         // weekday: 'short', 
         year: 'numeric', 
         month: 'short', 
         day: 'numeric' 
     }
     const dateTime: Intl.DateTimeFormatOptions = { 
-        // weekday: 'short', 
         year: 'numeric', 
         month: 'short', 
         day: 'numeric',
