@@ -25,9 +25,8 @@
 
             {#if $peersReady}
             {#each peers() as p}
-            <!-- {#each [...$peerMap.entries()] as [key, p], index (key)} -->
 
-            <tr class="table-row w-full px-0.5 hover:bg-gray-0">
+            <tr on:click={show} id={p.ID} class="table-row w-full px-0.5 hover:bg-gray-0">
                 <td class="w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">
                     <div class="relative">
                         <div class="flex items-center text-gray-600 text-sm">
@@ -72,7 +71,11 @@
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RXb)}</td>
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TXb)}</td>
             </tr>
-            <div>more stuff...</div>
+            <div style="height:{visible[p.ID] ? '100%' : '0'}" class="details">
+                more stuff...
+                {p.DNSName}
+                {p.OS}
+            </div>
             {/each}
             {/if}
         </tbody>
@@ -81,7 +84,11 @@
 
 <style lang="scss">
 @import "../../../local.css";
-
+.details {
+    height: 0;
+    overflow: hidden;
+    transition: height .3s;
+}
 .pointer {
     cursor: pointer;
 }
@@ -120,6 +127,13 @@
     dayjs.extend(relativeTime)
 
     let searchTerm: string = ""
+
+    let visible = {  }
+
+    const show = e => {
+        console.log(e.target)
+        visible[e.target.id] = !visible[e.target.id]
+    }
 
     const IP = Object.freeze({
         v4: Symbol("v4"),
