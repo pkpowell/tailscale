@@ -1,12 +1,11 @@
-
-<div class="peers">
+<div class="peers width-80">
     <div class="py-8 text-3xl font-semibold tracking-tight leading-tight">Peers</div>
     <input
         placeholder="Search..."
         bind:value ={searchTerm}
     >
     <table class="tb">
-        <thead class="stick opaque py-2">
+        <thead class="stick opaque py-4">
             <tr class="w-full md:text-base">
                 <th on:click={() => sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
                 <th on:click={() => sort("HostName")} class="pointer md:w-1/12 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
@@ -22,8 +21,8 @@
             {#if $peersReady}
             {#each peers() as p}
 
-            <tr on:click={() => toggleDetails(parseInt(p.ID))} class="table-row w-full px-0.5 hover:bg-gray-0">
-                <td class="w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">
+            <tr on:click={() => toggleDetails(parseInt(p.ID))} class="table-row w-full px-0.5 hover:bg-gray-0 py-1">
+                <td class="w-8 pr-3">
                     <div class="relative">
                         <div class="flex items-center text-gray-600 text-sm">
                             <span>
@@ -32,7 +31,7 @@
                         </div>
                     </div>
                 </td>
-                <td class="md:w-1/12 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">
+                <td class="md:w-1/12 flex-auto md:flex-initial md:shrink-0 text-ellipsis">
                     <div class="relative">
                         <div class="items-center text-gray-900">
                             <h3 class="font-semibold hover:text-blue-500">
@@ -177,7 +176,7 @@
         }
     }
 
-    const filterKeys = ["HostName", "IPv4", "IPv6", "DNSName", "OS", "ID"]
+    const filterKeys = ["HostName", "IPv4", "IPv6", "DNSName", "OS", "ID", "NodeKey"]
 
     const dateShort: Intl.DateTimeFormatOptions = { 
         // weekday: 'short', 
