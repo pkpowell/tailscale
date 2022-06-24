@@ -21,7 +21,7 @@
             {#if $peersReady}
             {#each peers() as p}
 
-            <tr on:click={() => toggleDetails(parseInt(p.ID))} class="table-row w-full px-0.5 hover:bg-gray-0 py-1">
+            <tr on:click={() => toggleDetails(parseInt(p.ID))} class="row table-row w-full px-0.5 hover:bg-gray-0 py-1">
                 <td class="w-8 pr-3">
                     <div class="relative">
                         <div class="flex items-center text-gray-600 text-sm">
@@ -102,7 +102,11 @@
     overflow: hidden;
     padding-left: 32px;
 }
-
+.row {
+    &:hover {
+        cursor: pointer;
+    }
+}
 .pointer {
     cursor: pointer;
 }
