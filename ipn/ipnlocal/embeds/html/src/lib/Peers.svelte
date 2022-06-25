@@ -203,7 +203,7 @@
         let p = [...$peerMap.entries()].map(x=>x[1]).filter(o=>{
             let hit = false
             for (let k of filterKeys) {
-                if (o[k].includes(searchTerm)) hit = true
+                if (o[k].toLowerCase().includes(searchTerm.toLowerCase())) hit = true
             }
             return hit
         })
