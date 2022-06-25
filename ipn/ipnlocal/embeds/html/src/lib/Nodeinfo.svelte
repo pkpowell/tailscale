@@ -55,6 +55,10 @@
                 <span class="key md:w-1/8">IPv6</span>
                 <span class="val md:w-1/3 font-semibold">{$local.IPv6}</span>
             </div>
+            <div class="ipv6 keyval">
+                <span class="key md:w-1/8">API Port</span>
+                <span class="val md:w-1/3 font-semibold">{$local.PeerAPIPort}</span>
+            </div>
 
             <div class="backend keyval">
                 <span class="key md:w-1/8">Server URL</span>

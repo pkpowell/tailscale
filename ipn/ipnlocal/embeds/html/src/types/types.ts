@@ -17,6 +17,7 @@ class AppData {
     IPs: object[];
     IPv4: string;
     IPv6: string;
+    PeerAPIPort: number;
     Now: Date;
     TX: number;
     RX: number;
@@ -60,6 +61,7 @@ interface Peer {
     IPv6: string;
     IPv4Num: string;
     IPv6Num: string;
+    PeerAPIPort: number;
     RX: string;
     TX: string;
     RxBytes: number;

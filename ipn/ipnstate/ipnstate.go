@@ -127,6 +127,7 @@ type PeerStatus struct {
 	OS           string // HostInfo.OS
 	UserID       tailcfg.UserID
 	TailscaleIPs []netaddr.IP // Tailscale IP(s) assigned to this node
+	PeerAPIPort  uint16
 
 	// Tags are the list of ACL tags applied to this node.
 	// See tailscale.com/tailcfg#Node.Tags for more information.

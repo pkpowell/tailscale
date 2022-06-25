@@ -88,6 +88,12 @@
                     <span class="key md:w-1/12">Last seen</span>
                     <span class="val md:w-1/3">{new Date(p.LastSeen).toLocaleDateString("en-US", dateTime)}</span>
                 </div>
+                {#if p.PeerAPIPort > 0}
+                <div class="keyval text-sm">
+                    <span class="key md:w-1/12">API Port</span>
+                    <span class="val md:w-1/3">{p.PeerAPIPort}</span>
+                </div>
+                {/if}
             </div>
             {/each}
             {/if}

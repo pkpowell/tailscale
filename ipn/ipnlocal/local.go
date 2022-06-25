@@ -3575,6 +3575,8 @@ type statusData struct {
 	TX           int64
 	RX           int64
 
+	PeerAPIPort uint16
+
 	Peers []*ipnstate.PeerData
 }
 
@@ -3670,6 +3672,12 @@ func getLocalData(b *LocalBackend) *statusData {
 			data.IPv6 = ip.IP().String()
 		} else {
 			data.IPv4 = ip.IP().String()
+			port, ok := b.GetPeerAPIPort(ip.IP())
+			if ok {
+				data.PeerAPIPort = port
+			} else {
+				data.PeerAPIPort = 0
+			}
 		}
 	}
 
@@ -3685,6 +3693,23 @@ func peerData(b *LocalBackend) (peers []*ipnstate.PeerData) {
 		if ps.ShareeNode {
 			continue
 		}
+
+		var apiPort uint16
+		var ok bool
+
+		for _, ip := range ps.TailscaleIPs {
+			apiPort, ok = b.GetPeerAPIPort(ip)
+			if ok {
+				ps.PeerAPIPort = apiPort
+				break
+			} else {
+				ps.PeerAPIPort = 0
+			}
+		}
+		if apiPort == 0 {
+			fmt.Print("No PeerAPI port found\n")
+		}
+
 		peers = append(peers, getPeerData(ps))
 	}
 
