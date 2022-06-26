@@ -410,7 +410,8 @@ type PeerData struct {
 	Owner       string               `json:"Owner"`
 	DNSName     string               `json:"DNSName"`
 	TailAddr    []net.IPAddr         `json:"TailAddr"`
-	Connection  string               `json:"Connection"`
+	RelayActive bool                 `json:"RelayActive"`
+	Relay       string               `json:"Relay"`
 	TX          string               `json:"TX"`
 	RX          string               `json:"RX"`
 	TXb         int64                `json:"TXb"`
@@ -485,7 +486,7 @@ func (st *Status) WriteHTMLtmpl(w http.ResponseWriter) {
 
 		if ps.Active {
 			if ps.Relay != "" && ps.CurAddr == "" {
-				data.Peers[i].Connection = html.EscapeString(ps.Relay)
+				data.Peers[i].Relay = html.EscapeString(ps.Relay)
 				// } else if ps.CurAddr != "" {
 				// 	data.Peers[i].Connection = html.EscapeString(ps.CurAddr)
 			}

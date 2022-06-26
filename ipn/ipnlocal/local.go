@@ -3585,7 +3585,7 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 	var ipv6 string
 	var ipv4Num string
 	var ipv6Num string
-	var connection string
+	var relayActive bool
 	var ActAgo string
 
 	for _, ip := range ps.TailscaleIPs {
@@ -3609,7 +3609,7 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 
 	if ps.Active {
 		if ps.Relay != "" && ps.CurAddr == "" {
-			connection = ps.Relay
+			relayActive = true
 		}
 	}
 
@@ -3634,7 +3634,8 @@ func getPeerData(ps *ipnstate.PeerStatus) *ipnstate.PeerData {
 		TX:          ipnstate.FormatBytes(ps.TxBytes, base),
 		RXb:         ps.RxBytes,
 		TXb:         ps.TxBytes,
-		Connection:  connection,
+		RelayActive: relayActive,
+		Relay:       ps.Relay,
 		ActAgo:      ActAgo,
 		LastSeen:    ps.LastSeen.Format(time.RFC3339),
 		Unseen:      ps.LastWrite.IsZero(),
@@ -3706,9 +3707,9 @@ func peerData(b *LocalBackend) (peers []*ipnstate.PeerData) {
 				ps.PeerAPIPort = 0
 			}
 		}
-		if apiPort == 0 {
-			fmt.Print("No PeerAPI port found\n")
-		}
+		// if apiPort == 0 {
+		// 	fmt.Print("No PeerAPI port found\n")
+		// }
 
 		peers = append(peers, getPeerData(ps))
 	}

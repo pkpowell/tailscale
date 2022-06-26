@@ -74,8 +74,12 @@
                 </div>
                 <div class="keyval text-sm">
                     <span class="key md:w-1/12">Relay</span>
-                    <span class="val md:w-1/3">{p.Connection}</span>
+                    <span class="val md:w-1/3 {p.RelayActive ? 'red' : 'gray'}">{p.Relay}</span>
                 </div>
+                <!-- <div class="keyval text-sm">
+                    <span class="key md:w-1/12">Relay</span>
+                    <span class="val md:w-1/3">{p.ActAgo}</span>
+                </div> -->
                 <div class="keyval text-sm">
                     <span class="key md:w-1/12">Created</span>
                     <span class="val md:w-1/3">{new Date(p.Created).toLocaleDateString("en-US", dateShort)}</span>
@@ -116,7 +120,12 @@
 .pointer {
     cursor: pointer;
 }
-
+.red {
+    color: red;
+}
+.gray {
+    color: gray;
+}
 .ip-toggle {
     z-index: 100;
     position: relative;

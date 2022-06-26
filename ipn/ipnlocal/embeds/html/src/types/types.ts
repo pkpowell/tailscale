@@ -69,6 +69,7 @@ interface Peer {
     RXb: number;
     TXb: number;
     Relay: string;
+    RelayActive: boolean;
     Connection: string;
     ActAgo: string;
     LastSeen: Date;
