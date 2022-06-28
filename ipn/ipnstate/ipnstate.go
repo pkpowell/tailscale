@@ -280,8 +280,6 @@ func (sb *StatusBuilder) AddPeer(peer key.NodePublic, st *PeerStatus) (e *PeerSt
 		return
 	}
 
-	// log.Printf("adding peer %s", e.HostName)
-
 	if v := st.ID; v != "" {
 		e.ID = v
 	}

@@ -1,4 +1,4 @@
-<div class="peers width-80">
+<div class="peers">
     <div class="py-8 text-3xl font-semibold tracking-tight leading-tight">Peers</div>
     <input
         placeholder="Search..."
@@ -9,7 +9,7 @@
             <tr class="w-full md:text-base">
                 <th on:click={() => sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
                 <th on:click={() => sort("HostName")} class="pointer md:w-1/12 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
-                <th on:click={() => sort(ip.k)} class="pointer hidden md:block md:w-1/12">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></th>
+                <th on:click={() => sort(ip.k)} class="pointer hidden md:block md:w-1/8">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></th>
                 <th on:click={() => sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
                 <th on:click={() => sort("RXb")} class="pointer hidden md:block md:w-1/12 text-right">rx</th>
                 <th on:click={() => sort("TXb")} class="pointer hidden md:block md:w-1/12 text-right">tx</th>
@@ -31,6 +31,7 @@
                         </div>
                     </div>
                 </td>
+
                 <td class="md:w-1/12 flex-auto md:flex-initial md:shrink-0 text-ellipsis">
                     <div class="relative">
                         <div class="items-center text-gray-900">
@@ -39,9 +40,9 @@
                             </h3>
                         </div>
                     </div>
-                    
                 </td>
-                <td class="hidden md:block md:w-1/12">
+
+                <td class="hidden md:block md:w-1/8">
                     <ul>
                         {#if ip.v === IP.v4}
                         <li class="pr-6">
@@ -58,8 +59,11 @@
                         {/if}
                     </ul>
                 </td>
+
                 <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", dateShort)}">{ago(p.LastSeen, p.Unseen)}</td>
+
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RXb)}</td>
+
                 <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TXb)}</td>
             </tr>
 
@@ -68,30 +72,32 @@
                     <span class="key md:w-1/12">DNS</span>
                     <span class="val md:w-1/3">{p.DNSName}</span>
                 </div>
+
                 <div class="keyval text-sm">
                     <span class="key md:w-1/12">OS</span>
                     <span class="val md:w-1/3">{p.OS}</span>
                 </div>
+
                 <div class="keyval text-sm">
                     <span class="key md:w-1/12">Relay</span>
                     <span class="val md:w-1/3 {p.RelayActive ? 'red' : 'gray'}">{p.Relay}</span>
                 </div>
-                <!-- <div class="keyval text-sm">
-                    <span class="key md:w-1/12">Relay</span>
-                    <span class="val md:w-1/3">{p.ActAgo}</span>
-                </div> -->
+
                 <div class="keyval text-sm">
                     <span class="key md:w-1/12">Created</span>
                     <span class="val md:w-1/3">{new Date(p.Created).toLocaleDateString("en-US", dateShort)}</span>
                 </div>
+
                 <div class="keyval text-sm">
                     <span class="key md:w-1/12">Node Key</span>
                     <span class="val md:w-1/3">{p.NodeKey}</span>
                 </div>
+
                 <div class="keyval text-sm">
                     <span class="key md:w-1/12">Last seen</span>
                     <span class="val md:w-1/3">{new Date(p.LastSeen).toLocaleDateString("en-US", dateTime)}</span>
                 </div>
+
                 {#if p.PeerAPIPort > 0}
                 <div class="keyval text-sm">
                     <span class="key md:w-1/12">API Port</span>

@@ -1281,6 +1281,7 @@ func (e *userspaceEngine) UpdateStatus(sb *ipnstate.StatusBuilder) {
 		return
 	}
 	for _, ps := range st.Peers {
+		fmt.Printf("updating status %+v", ps)
 		sb.AddPeer(ps.NodeKey, &ipnstate.PeerStatus{
 			RxBytes:       int64(ps.RxBytes),
 			TxBytes:       int64(ps.TxBytes),

@@ -1,5 +1,5 @@
 
-    <div class="width-80">
+    <div class="">
         {#if $localReady}
         <div class="flex py-8">
 
@@ -56,8 +56,11 @@
                 <span class="val md:w-1/3 font-semibold">{$local.IPv6}</span>
             </div>
             <div class="ipv6 keyval">
-                <span class="key md:w-1/8">API Port</span>
-                <span class="val md:w-1/3 font-semibold">{$local.PeerAPIPort}</span>
+                <span class="key md:w-1/8">API</span>
+                <span class="val md:w-1/3 font-semibold">
+                    <a target="_blank" rel="noopener noreferrer" href="{'http://'+$local.IPv4+':'+$local.PeerAPIPort}">{$local.IPv4+':'+$local.PeerAPIPort}</a>
+                    
+                </span>
             </div>
 
             <div class="backend keyval">
