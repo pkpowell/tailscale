@@ -1,8 +1,10 @@
 <div class="peers">
     <div class="py-8 text-3xl font-semibold tracking-tight leading-tight">Peers</div>
+    <!-- svelte-ignore a11y-autofocus -->
     <input
         placeholder="Search..."
         bind:value ={searchTerm}
+        autofocus
     >
     <table class="tb">
         <thead class="stick opaque py-4">
@@ -113,6 +115,9 @@
 
 <style lang="scss">
 @import "../../../local.css";
+input, input:focus {
+    outline: none;
+}
 .details {
     height: 0;
     overflow: hidden;
