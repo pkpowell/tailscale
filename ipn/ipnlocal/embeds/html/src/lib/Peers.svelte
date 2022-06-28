@@ -6,70 +6,52 @@
         bind:value ={searchTerm}
         autofocus
     >
-    <table class="tb">
-        <thead class="stick opaque py-4">
-            <tr class="w-full md:text-base">
-                <th on:click={() => sort("ID")} class="pointer w-8 pr-3 flex-auto md:flex-initial md:shrink-0 w-0 ">ID</th>
-                <th on:click={() => sort("HostName")} class="pointer md:w-1/12 flex-auto md:flex-initial md:shrink-0 w-0 text-ellipsis">machine</th>
-                <th on:click={() => sort(ip.k)} class="pointer hidden md:block md:w-1/8">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></th>
-                <th on:click={() => sort("LastSeen")} class="pointer hidden md:block md:w-1/12">Last Seen</th>
-                <th on:click={() => sort("RXb")} class="pointer hidden md:block md:w-1/12 text-right">rx</th>
-                <th on:click={() => sort("TXb")} class="pointer hidden md:block md:w-1/12 text-right">tx</th>
-            </tr>
-        </thead>
+    <div class="table">
 
-        <tbody class="table-body">
+        <div on:click={() => sort("ID")} class="sticky header">ID</div>
+        <div on:click={() => sort("HostName")} class="sticky header">machine</div>
+        <div on:click={() => sort(ip.k)} class="sticky header text-right">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></div>
+        <div on:click={() => sort("LastSeen")} class="sticky header">Last Seen</div>
+        <div on:click={() => sort("RXb")} class="sticky header text-right">rx</div>
+        <div on:click={() => sort("TXb")} class="sticky header text-right">tx</div>
+
 
             {#if $peersReady}
             {#each peers() as p}
 
-            <tr on:click={() => toggleDetails(parseInt(p.ID))} class="row table-row w-full px-0.5 hover:bg-gray-0 py-1">
-                <td class="w-8 pr-3">
-                    <div class="relative">
-                        <div class="flex items-center text-gray-600 text-sm">
-                            <span>
-                                {p.ID}
-                            </span>
-                        </div>
-                    </div>
-                </td>
+            <!-- <div on:click={() => toggleDetails(parseInt(p.ID))} class="row table-row w-full px-0.5 hover:bg-gray-0 py-1"> -->
+                <div class="">
+                    <span>
+                        {p.ID}
+                    </span>
+                </div>
 
-                <td class="md:w-1/12 flex-auto md:flex-initial md:shrink-0 text-ellipsis">
-                    <div class="relative">
-                        <div class="items-center text-gray-900">
-                            <h3 class="font-semibold hover:text-blue-500">
-                                {p.HostName}
-                            </h3>
-                        </div>
-                    </div>
-                </td>
+                <div class="text-ellipsis">
+                    <h3 class="font-semibold">
+                        {p.HostName}
+                    </h3>
+                </div>
 
-                <td class="hidden md:block md:w-1/8">
-                    <ul>
+                <div class="text-right mono">
                         {#if ip.v === IP.v4}
-                        <li class="pr-6">
-                            <div class="truncate pr-6">
+                            <div class="">
                                 <div class="">{p.IPv4}</div>
                             </div>
-                        </li>
                         {:else}
-                        <li class="pr-6">
-                            <div class="truncate pr-6">
+                            <div class="">
                                 <span class="">{p.IPv6}</span>
                             </div>
-                        </li>
                         {/if}
-                    </ul>
-                </td>
+                </div>
 
-                <td class="hidden md:block md:w-1/12" title="{new Date(p.LastSeen).toLocaleDateString("en-US", dateShort)}">{ago(p.LastSeen, p.Unseen)}</td>
+                <div class="" title="{new Date(p.LastSeen).toLocaleDateString("en-US", dateShort)}">{ago(p.LastSeen, p.Unseen)}</div>
 
-                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.RXb)}</td>
+                <div class="text-right">{bytes(p.RXb)}</div>
 
-                <td class="hidden md:block md:w-1/12 text-right">{bytes(p.TXb)}</td>
-            </tr>
+                <div class="text-right">{bytes(p.TXb)}</div>
+            <!-- </div> -->
 
-            <div style="height:{visible[p.ID] ? '100%' : '0'}" class="details">
+            <!-- <div style="height:{visible[p.ID] ? '100%' : '0'}" class="details">
                 <div class="keyval text-sm">
                     <span class="key md:w-1/12">DNS</span>
                     <span class="val md:w-1/3">{p.DNSName}</span>
@@ -106,15 +88,27 @@
                     <span class="val md:w-1/3">{p.PeerAPIPort}</span>
                 </div>
                 {/if}
-            </div>
+            </div> -->
             {/each}
             {/if}
-        </tbody>
-    </table>
+        <!-- </tbody> -->
+    </div>
 </div>
 
 <style lang="scss">
 @import "../../../local.css";
+.mono {
+    font-family: monospace;
+}
+.table {
+  display: grid;
+  grid-template-columns:1fr 5fr 1fr 5fr 2fr 2fr;
+  column-gap: 10%;
+  row-gap: 2%;
+  max-width: 80%;
+}
+
+
 input, input:focus {
     outline: none;
 }
@@ -128,8 +122,12 @@ input, input:focus {
         cursor: pointer;
     }
 }
-.pointer {
+.header {
     cursor: pointer;
+    font-weight: 500;
+    font-size: x-large;
+    position: sticky;
+    top: 0;
 }
 .red {
     color: red;
