@@ -97,31 +97,33 @@
 
 <style lang="scss">
 @import "../../../local.css";
-.mono {
-    font-family: monospace;
+.peers {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
+// .mono {
+//     font-family: monospace;
+// }
 .table {
-  display: grid;
-  grid-template-columns:1fr 5fr 1fr 5fr 2fr 2fr;
-  column-gap: 10%;
-  row-gap: 2%;
-  max-width: 80%;
+    display: grid;
+    grid-template-columns: 20px 100px 200px 200px  200px 10%;
+    column-gap: 50px;
+    row-gap: 2%;
+    max-width: 80%;
 }
-
 
 input, input:focus {
     outline: none;
 }
-.details {
-    height: 0;
-    overflow: hidden;
-    padding-left: 32px;
-}
-.row {
-    &:hover {
-        cursor: pointer;
-    }
-}
+// .details {
+//     height: 0;
+//     overflow: hidden;
+//     padding-left: 32px;
+// }
+// .row {
+//     &:hover {
+//         cursor: pointer;
+//     }
+// }
 .header {
     cursor: pointer;
     font-weight: 500;
@@ -130,12 +132,12 @@ input, input:focus {
     top: 0;
     text-transform: uppercase;
 }
-.red {
-    color: red;
-}
-.gray {
-    color: gray;
-}
+// .red {
+//     color: red;
+// }
+// .gray {
+//     color: gray;
+// }
 .ip-toggle {
     z-index: 100;
     position: relative;
