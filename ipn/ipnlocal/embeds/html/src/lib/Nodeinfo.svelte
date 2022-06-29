@@ -22,7 +22,7 @@
                     <div class="truncate mr-2">
                         <div class="">
                             <span class="font-semibold">{$local.HostName}</span> 
-                            <span class="text-sm">{$local.StableID}</span><span> – </span>
+                            <span class="text-sm">{$local.StableID}</span><span class="dash">–</span>
                             <span class="text-sm">{$local.NodeKey}</span>
                         </div>
                         <div class="text-sm">
@@ -116,6 +116,10 @@
     }
 </script>
 
-<style>
+<style lang="scss">
 @import "../../../local.css";
+
+.dash {
+    padding-left: .3rem;
+}
 </style>

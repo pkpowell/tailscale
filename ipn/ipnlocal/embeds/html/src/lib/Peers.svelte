@@ -125,7 +125,7 @@ input, input:focus {
 .header {
     cursor: pointer;
     font-weight: 500;
-    font-size: x-large;
+    font-size: large;
     position: sticky;
     top: 0;
     text-transform: uppercase;
