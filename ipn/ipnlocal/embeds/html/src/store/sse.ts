@@ -14,9 +14,9 @@ const updatePeers = (p: Peer) => {
     peerMap.update(records => records.set(p.ID, p))
 }
 
-const setPeers = (p: Peer[]) => {
-    p.forEach(x=>{
-        peerMap.update(records => records.set(x.ID, x))
+const setPeers = (peers: Peer[]) => {
+    peers.forEach(p=>{
+        peerMap.update(records => records.set(p.ID, p))
     })
 }
 

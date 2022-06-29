@@ -33,6 +33,9 @@ class Factory {
 let factory = new Factory()
 let Appl = factory.create(AppData)
 
+// interface PeerHash {
+
+// }
 interface Service {
     Description: string;
     Port: number;
