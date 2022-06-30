@@ -2290,7 +2290,7 @@ func (b *LocalBackend) authReconfig() {
 }
 
 // dnsConfigForNetmap returns a *dns.Config for the given netmap,
-// prefs, and client OS version.
+// prefs, client OS version, and cloud hosting environment.
 //
 // The versionOS is a Tailscale-style version ("iOS", "macOS") and not
 // a runtime.GOOS.
@@ -2385,7 +2385,6 @@ func dnsConfigForNetmap(nm *netmap.NetworkMap, prefs *ipn.Prefs, logf logger.Log
 
 	addDefault := func(resolvers []*dnstype.Resolver) {
 		for _, r := range resolvers {
-			r := r
 			dcfg.DefaultResolvers = append(dcfg.DefaultResolvers, r)
 		}
 	}
