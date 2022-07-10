@@ -8,12 +8,12 @@
     >
     <div class="table">
 
-        <div on:click={() => sort("ID")} class="sticky header">ID</div>
-        <div on:click={() => sort("HostName")} class="sticky header">name</div>
-        <div on:click={() => sort(ip.k)} class="sticky header text-right">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></div>
-        <div on:click={() => sort("LastSeen")} class="sticky header">Last Seen</div>
-        <div on:click={() => sort("RXb")} class="sticky header text-right">rx</div>
-        <div on:click={() => sort("TXb")} class="sticky header text-right">tx</div>
+        <div on:click={()=> sort("ID")} class="sticky header">ID</div>
+        <div on:click={()=> sort("HostName")} class="sticky header">name</div>
+        <div on:click={()=> sort(ip.k)} class="sticky header text-right">IP<button class="ip-toggle" on:click|stopPropagation={toggleIP}>{ip.f}</button></div>
+        <div on:click={()=> sort("LastSeen")} class="sticky header">Last Seen</div>
+        <div on:click={()=> sort("RXb")} class="sticky header text-right">rx</div>
+        <div on:click={()=> sort("TXb")} class="sticky header text-right">tx</div>
 
 
             {#if $peersReady}
