@@ -11,5 +11,5 @@
 </header>
 
 <style>
-  @import "../../local.css";
+@import "./assets/css/local.css";
 </style>

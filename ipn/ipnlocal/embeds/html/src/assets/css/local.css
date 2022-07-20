@@ -1,3 +1,4 @@
+@import "./fonts.css";
 .width-80 {
     width: 80%; 
     margin: auto;
@@ -1436,8 +1437,7 @@ html {
 
 } */
 
-html,
-    body {
+	html, body {
       margin: 0;
       padding: 0;
     }

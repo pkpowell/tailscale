@@ -117,7 +117,7 @@
 </script>
 
 <style lang="scss">
-@import "../../../local.css";
+@import "../assets/css/local.css";
 
 .dash {
     padding-left: .3rem;

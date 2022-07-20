@@ -96,7 +96,7 @@
 </div>
 
 <style lang="scss">
-@import "../../../local.css";
+@import "../assets/css/local.css";
 .peers {
     font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
