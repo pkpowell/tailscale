@@ -20,20 +20,132 @@ import (
 	"strings"
 	"time"
 
+	"github.com/peterbourgon/ff/v3/ffcli"
 	"github.com/tailscale/hujson"
 )
 
 var (
-	policyFname  = flag.String("policy-file", "./policy.hujson", "filename for policy file")
-	timeout      = flag.Duration("timeout", 5*time.Minute, "timeout for the entire CI run")
-	githubSyntax = flag.Bool("github-syntax", true, "use GitHub Action error syntax (https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-error-message)")
+	rootFlagSet  = flag.NewFlagSet("gitops-pusher", flag.ExitOnError)
+	policyFname  = rootFlagSet.String("policy-file", "./policy.hujson", "filename for policy file")
+	cacheFname   = rootFlagSet.String("cache-file", "./version-cache.json", "filename for the previous known version hash")
+	timeout      = rootFlagSet.Duration("timeout", 5*time.Minute, "timeout for the entire CI run")
+	githubSyntax = rootFlagSet.Bool("github-syntax", true, "use GitHub Action error syntax (https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-error-message)")
+
+	modifiedExternallyFailure = make(chan struct{}, 1)
 )
 
-func main() {
-	flag.Parse()
-	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
-	defer cancel()
+func modifiedExternallyError() {
+	if *githubSyntax {
+		fmt.Printf("::error file=%s,line=1,col=1,title=Policy File Modified Externally::The policy file was modified externally in the admin console.\n", *policyFname)
+	} else {
+		fmt.Printf("The policy file was modified externally in the admin console.\n")
+	}
+	modifiedExternallyFailure <- struct{}{}
+}
 
+func apply(cache *Cache, tailnet, apiKey string) func(context.Context, []string) error {
+	return func(ctx context.Context, args []string) error {
+		controlEtag, err := getACLETag(ctx, tailnet, apiKey)
+		if err != nil {
+			return err
+		}
+
+		localEtag, err := sumFile(*policyFname)
+		if err != nil {
+			return err
+		}
+
+		if cache.PrevETag == "" {
+			log.Println("no previous etag found, assuming local file is correct and recording that")
+			cache.PrevETag = Shuck(localEtag)
+		}
+
+		log.Printf("control: %s", controlEtag)
+		log.Printf("local:   %s", localEtag)
+		log.Printf("cache:   %s", cache.PrevETag)
+
+		if cache.PrevETag != controlEtag {
+			modifiedExternallyError()
+		}
+
+		if controlEtag == localEtag {
+			log.Println("no update needed, doing nothing")
+			return nil
+		}
+
+		if err := applyNewACL(ctx, tailnet, apiKey, *policyFname, controlEtag); err != nil {
+			return err
+		}
+
+		cache.PrevETag = Shuck(localEtag)
+
+		return nil
+	}
+}
+
+func test(cache *Cache, tailnet, apiKey string) func(context.Context, []string) error {
+	return func(ctx context.Context, args []string) error {
+		controlEtag, err := getACLETag(ctx, tailnet, apiKey)
+		if err != nil {
+			return err
+		}
+
+		localEtag, err := sumFile(*policyFname)
+		if err != nil {
+			return err
+		}
+
+		if cache.PrevETag == "" {
+			log.Println("no previous etag found, assuming local file is correct and recording that")
+			cache.PrevETag = Shuck(localEtag)
+		}
+
+		log.Printf("control: %s", controlEtag)
+		log.Printf("local:   %s", localEtag)
+		log.Printf("cache:   %s", cache.PrevETag)
+
+		if cache.PrevETag != controlEtag {
+			modifiedExternallyError()
+		}
+
+		if controlEtag == localEtag {
+			log.Println("no updates found, doing nothing")
+			return nil
+		}
+
+		if err := testNewACLs(ctx, tailnet, apiKey, *policyFname); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func getChecksums(cache *Cache, tailnet, apiKey string) func(context.Context, []string) error {
+	return func(ctx context.Context, args []string) error {
+		controlEtag, err := getACLETag(ctx, tailnet, apiKey)
+		if err != nil {
+			return err
+		}
+
+		localEtag, err := sumFile(*policyFname)
+		if err != nil {
+			return err
+		}
+
+		if cache.PrevETag == "" {
+			log.Println("no previous etag found, assuming local file is correct and recording that")
+			cache.PrevETag = Shuck(localEtag)
+		}
+
+		log.Printf("control: %s", controlEtag)
+		log.Printf("local:   %s", localEtag)
+		log.Printf("cache:   %s", cache.PrevETag)
+
+		return nil
+	}
+}
+
+func main() {
 	tailnet, ok := os.LookupEnv("TS_TAILNET")
 	if !ok {
 		log.Fatal("set envvar TS_TAILNET to your tailnet's name")
@@ -42,57 +154,61 @@ func main() {
 	if !ok {
 		log.Fatal("set envvar TS_API_KEY to your Tailscale API key")
 	}
-
-	switch flag.Arg(0) {
-	case "apply":
-		controlEtag, err := getACLETag(ctx, tailnet, apiKey)
-		if err != nil {
-			log.Fatal(err)
+	cache, err := LoadCache(*cacheFname)
+	if err != nil {
+		if os.IsNotExist(err) {
+			cache = &Cache{}
+		} else {
+			log.Fatalf("error loading cache: %v", err)
 		}
+	}
+	defer cache.Save(*cacheFname)
 
-		localEtag, err := sumFile(*policyFname)
-		if err != nil {
-			log.Fatal(err)
-		}
+	applyCmd := &ffcli.Command{
+		Name:       "apply",
+		ShortUsage: "gitops-pusher [options] apply",
+		ShortHelp:  "Pushes changes to CONTROL",
+		LongHelp:   `Pushes changes to CONTROL`,
+		Exec:       apply(cache, tailnet, apiKey),
+	}
 
-		log.Printf("control: %s", controlEtag)
-		log.Printf("local:   %s", localEtag)
+	testCmd := &ffcli.Command{
+		Name:       "test",
+		ShortUsage: "gitops-pusher [options] test",
+		ShortHelp:  "Tests ACL changes",
+		LongHelp:   "Tests ACL changes",
+		Exec:       test(cache, tailnet, apiKey),
+	}
 
-		if controlEtag == localEtag {
-			log.Println("no update needed, doing nothing")
-			os.Exit(0)
-		}
+	cksumCmd := &ffcli.Command{
+		Name:       "checksum",
+		ShortUsage: "Shows checksums of ACL files",
+		ShortHelp:  "Fetch checksum of CONTROL's ACL and the local ACL for comparison",
+		LongHelp:   "Fetch checksum of CONTROL's ACL and the local ACL for comparison",
+		Exec:       getChecksums(cache, tailnet, apiKey),
+	}
 
-		if err := applyNewACL(ctx, tailnet, apiKey, *policyFname, controlEtag); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+	root := &ffcli.Command{
+		ShortUsage:  "gitops-pusher [options] <command>",
+		ShortHelp:   "Push Tailscale ACLs to CONTROL using a GitOps workflow",
+		Subcommands: []*ffcli.Command{applyCmd, cksumCmd, testCmd},
+		FlagSet:     rootFlagSet,
+	}
 
-	case "test":
-		controlEtag, err := getACLETag(ctx, tailnet, apiKey)
-		if err != nil {
-			log.Fatal(err)
-		}
+	if err := root.Parse(os.Args[1:]); err != nil {
+		log.Fatal(err)
+	}
 
-		localEtag, err := sumFile(*policyFname)
-		if err != nil {
-			log.Fatal(err)
-		}
+	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
+	defer cancel()
 
-		log.Printf("control: %s", controlEtag)
-		log.Printf("local:   %s", localEtag)
+	if err := root.Run(ctx); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
-		if controlEtag == localEtag {
-			log.Println("no updates found, doing nothing")
-			os.Exit(0)
-		}
-
-		if err := testNewACLs(ctx, tailnet, apiKey, *policyFname); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-	default:
-		log.Fatalf("usage: %s [options] <test|apply>", os.Args[0])
+	if len(modifiedExternallyFailure) != 0 {
+		os.Exit(1)
 	}
 }
 
@@ -113,7 +229,7 @@ func sumFile(fname string) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("\"%x\"", h.Sum(nil)), nil
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
 func applyNewACL(ctx context.Context, tailnet, apiKey, policyFname, oldEtag string) error {
@@ -174,12 +290,6 @@ func testNewACLs(ctx context.Context, tailnet, apiKey, policyFname string) error
 	}
 	defer resp.Body.Close()
 
-	got := resp.StatusCode
-	want := http.StatusOK
-	if got != want {
-		return fmt.Errorf("wanted HTTP status code %d but got %d", want, got)
-	}
-
 	var ate ACLTestError
 	err = json.NewDecoder(resp.Body).Decode(&ate)
 	if err != nil {
@@ -188,6 +298,12 @@ func testNewACLs(ctx context.Context, tailnet, apiKey, policyFname string) error
 
 	if len(ate.Message) != 0 || len(ate.Data) != 0 {
 		return ate
+	}
+
+	got := resp.StatusCode
+	want := http.StatusOK
+	if got != want {
+		return fmt.Errorf("wanted HTTP status code %d but got %d", want, got)
 	}
 
 	return nil
@@ -252,5 +368,5 @@ func getACLETag(ctx context.Context, tailnet, apiKey string) (string, error) {
 		return "", fmt.Errorf("wanted HTTP status code %d but got %d", want, got)
 	}
 
-	return resp.Header.Get("ETag"), nil
+	return Shuck(resp.Header.Get("ETag")), nil
 }
