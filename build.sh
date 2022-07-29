@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+export TAILSCALE_TOOLCHAIN_REV="go1.19rc25"
 
 if ! command -v npm &> /dev/null
 then
